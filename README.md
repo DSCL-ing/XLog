@@ -93,7 +93,7 @@
   - 说明:对软件实体的改动,最好用扩展而非修改的方式
   - 用例:超市促销,商品价格需要修改,选择不修改商品原来的价格,而是新增促销价格
 - 里氏替换原则(Liskov Substitution Principle)
-  - 概念: 只要父类能出现的地方,子类就可以出现,而且替换为子类也不会产生任何错误或异常
+  - 概念: 只要父类能出现的地方,子类就可以出现,而且替换为子类也不会产生任何错误或异常(子类可以切片给父类,但是不能反过来)
   - 注意: 在继承类时,务必重写父类中所有的方法,尤其需要注意父类的protected方法,子类尽量不要暴露自己的pulibc方法供外界调用.
   - 说明: 子类必须完全实现父类的方法,孩子类可以有自己的个性.覆盖或者实现父类的方法时,输入参数可以被放大,输出可以被缩小
   - 用例: 跑步运动员类-会跑步,子类长跑运动员-会跑步且擅长长跑,子类短跑运动员-会跑步且擅长短跑.
@@ -133,3 +133,141 @@
   - 优点:逻辑简单,使用方便
   - 缺点:初始化时间久
 - 因为单例对象已经确定,所以比较适用于多线程环境中,多线程获取单例对象不需要加锁,可以有效的避免资源竞争,提高性能.
+
+##### 饿汉模式示例
+```
+//Hungry Mode example
+#include<iostream>
+
+class Singleton
+{
+  public:
+    static Singleton& getInstance() { return _instance; } 
+    int getData() { return _data;}
+
+  private:
+    Singleton():_data(99)//一般情况单例的数据都是从配置文件读取
+    {
+      std::cout<<"单例对象初始化"<<std::endl;
+    }; 
+    Singleton(const Singleton& s)=delete;
+    Singleton& operator=(const Singleton& s)=delete;
+    ~Singleton(){};
+
+  private:
+    int _data;
+    static Singleton _instance ; //不允许非static成员,会无限定义下去.static只允许初始化一次可以使用
+};
+
+Singleton Singleton::_instance; 
+//类是一个类型,必须从代码区调用出来才算实例化
+
+
+int main()
+{
+  std::cout<<Singleton::getInstance().getData()<<std::endl;
+  return 0;
+}
+
+```
+
+##### 懒汉模式示例1
+
+```
+#include<iostream>
+#include<mutex>
+
+//C++通用版本
+
+class Singleton
+{
+  public:
+    static Singleton* getInstance()
+    {
+      if(_instance==nullptr)
+      {
+        std::lock_guard<std::mutex> lg(_mtx);
+        if(_instance == nullptr)
+        {
+          _instance = new Singleton();
+        }
+      }
+      return _instance;
+    }
+    int getData()
+    {
+      return _data;
+    }
+
+  private:
+    Singleton():_data(99){
+        std::cout<<"Lazy Mode Singleton Initialized!"<<std::endl;
+    };   
+    Singleton(const Singleton& s) = delete;
+    Singleton& operator=(const Singleton&s) = delete;
+    ~Singleton(){};
+
+  private:
+    //不能在堆栈上申请
+    int _data;
+    static std::mutex _mtx;
+    static Singleton* _instance; //满足动态内存管理要求,需要使用指针
+};
+Singleton* Singleton::_instance = nullptr; //static成员必须在类外初始化
+std::mutex Singleton::_mtx;
+
+int main()
+{
+  std::cout<<"function main is started"<<std::endl;
+  std::cout<<Singleton::getInstance()->getData()<<std::endl;
+  return 0;
+}
+```
+
+##### 懒汉模式示例2
+
+C++11后支持的版本,代码更简洁
+
+[静态局部变量](https://zh.cppreference.com/w/cpp/language/storage_duration#.E9.9D.99.E6.80.81.E5.B1.80.E9.83.A8.E5.8F.98.E9.87.8F)
+
+![image-20240524150658606](README.assets/image-20240524150658606.png)
+
+```
+#include<iostream>
+#include<mutex>
+
+//C++11版本懒汉单例模式
+
+class Singleton
+{
+  public:
+    static Singleton& getInstance()
+    {
+      static Singleton _instance; //C++11支持本地静态变量初始化时是线程安全的
+      return _instance;
+    }
+    int getData()
+    {
+      return _data;
+    }
+
+  private:
+    Singleton():_data(99){
+        std::cout<<"Lazy Mode Singleton Initialized!"<<std::endl;
+    };   
+    Singleton(const Singleton& s) = delete;
+    Singleton& operator=(const Singleton&s) = delete;
+    ~Singleton(){};
+
+  private:
+    int _data;
+};
+
+int main()
+{
+  std::cout<<"function main is started"<<std::endl;
+  std::cout<<Singleton::getInstance().getData()<<std::endl;
+  return 0;
+}
+```
+
