@@ -117,12 +117,27 @@
 
 从整体上来理解六大设计原则,可以简要地概括成一句话:用抽象构建框架,用实现来扩展细节,具体到每一条设计原则,则对应一条注意事项:
 
-- 单一职责原则告诉我们实现类要职责单一;
-- 里氏替换原则告诉我们不要破坏继承体系;
-- 依赖倒置原则告诉我们要面向接口编程;
-- 接口隔离原则告诉我们在设计接口时要精简单一;
-- 迪米特法则告诉我们要降低耦合;
-- 开闭原则是总纲,告诉我们要对扩展开放,对修改关闭.
+- 单一职责原则:实现类要职责单一;
+
+  类实现要高内聚,低耦合
+
+- 开闭原则:总纲,要对扩展开放,对修改关闭.
+
+  已写好的类不要修改,新的功能通过构造新的类来完成.(功能不够再new新的子类)
+
+- 依赖倒置原则:面向接口编程;
+
+  策略模式,只使用父类接口(虚函数多态),由子类实现细节.
+
+- 里氏替换原则:不要破坏继承体系;
+
+  子类能够完全替换掉父类;子类要满足父类提供的所有接口(重写所有的虚函数)
+
+- 接口隔离原则:在设计接口时要精简单一;
+
+- 迪米特法则:降低耦合;
+
+  
 
 #### 单例模式
 
@@ -135,7 +150,12 @@
   - 缺点:初始化时间久
 - 因为单例对象已经确定,所以比较适用于多线程环境中,多线程获取单例对象不需要加锁,可以有效的避免资源竞争,提高性能.
 
+单例用途:配置管理,任务队列...
+
+
+
 ##### 饿汉模式示例
+
 ```
 //Hungry Mode example
 #include<iostream>
@@ -149,6 +169,7 @@ class Singleton
   private:
     Singleton():_data(99)//一般情况单例的数据都是从配置文件读取
     {
+      //必须要实现一个构造函数用于动态申请.
       std::cout<<"单例对象初始化"<<std::endl;
     }; 
     Singleton(const Singleton& s)=delete;
@@ -173,6 +194,8 @@ int main()
 ```
 
 ##### 懒汉模式示例1
+
+双检查加锁方式
 
 ```
 #include<iostream>
@@ -227,7 +250,7 @@ int main()
 
 ##### 懒汉模式示例2
 
-C++11后支持的版本,代码更简洁
+使用静态变量方式,C++11后支持的版本,代码更简洁
 
 [静态局部变量](https://zh.cppreference.com/w/cpp/language/storage_duration#.E9.9D.99.E6.80.81.E5.B1.80.E9.83.A8.E5.8F.98.E9.87.8F)
 
@@ -272,3 +295,54 @@ int main()
 }
 ```
 
+##### 懒汉模式示例3
+
+使用call_once()函数,C++11后支持的方式,代码更简洁
+
+```
+#include<iostream>
+#include<thread>
+#include<mutex>
+
+std::once_flag g_flag;
+
+class Singleton {
+public:
+    Singleton(const Singleton& s) = delete;
+    Singleton& operator=(const Singleton&s) = delete;
+    static Singleton* GetInstance() {
+        std::call_once(g_flag,[](){ std::cout<<"do once:"<<std::this_thread::get_id()<<"\n"; _instance = new Singleton; });
+        std::cout<<std::this_thread::get_id()<<"\n";
+        return _instance;
+    }
+
+private:
+    Singleton(){};
+    static Singleton* _instance;
+};
+Singleton* Singleton::_instance = nullptr;
+
+
+int main() {
+   std::thread t1(Singleton::GetInstance);
+   std::thread t2(Singleton::GetInstance);
+   std::thread t3(Singleton::GetInstance);
+    
+    t1.join();
+    t2.join();
+    t3.join();
+	return 0;
+}
+```
+
+![image-20240628223634392](README.assets/image-20240628223634392.png)
+
+
+
+#### 工厂模式
+
+工厂模式是一种创建型设计模式,它提供了一种创建对象的最佳方式.在工厂模式中,我们创建对象时不会对上层暴露创建逻辑,而是通过使用一个共同结构来指向新创建的对象,以此实现创建-使用的分离
+
+工厂模式可以分为:
+
+- 简单工厂模式:简单工厂模式实现由一个工厂对象通过类型决定创建出来指定产品类的实例.假设有个工厂能生产出水果,当客户需要产品的时候明确告知工厂类生产哪类水果,工厂需要接收用户提供的类别信息,当新增产品的时候,工厂内部去添加新产品的生产方式.
