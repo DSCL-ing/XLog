@@ -311,7 +311,7 @@ public:
     Singleton(const Singleton& s) = delete;
     Singleton& operator=(const Singleton&s) = delete;
     static Singleton* GetInstance() {
-        std::call_once(g_flag,[](){ std::cout<<"do once:"<<std::this_thread::get_id()<<"\n"; _instance = new Singleton; });
+        std::call_once(g_flag,[](){ std::cout<<"do once:"<<std::this_thread::get_id()<<"\n"; _instance = new Singleton; }); //成员函数中lambda默认隐式捕获this,因此可以直接访问到成员变量
         std::cout<<std::this_thread::get_id()<<"\n";
         return _instance;
     }
