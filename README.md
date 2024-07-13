@@ -202,6 +202,7 @@ int main()
 #include<mutex>
 
 //C++通用版本
+//注意:存在因内存顺序(代码执行顺序)导致安全隐患
 
 class Singleton
 {
@@ -213,7 +214,8 @@ class Singleton
         std::lock_guard<std::mutex> lg(_mtx);
         if(_instance == nullptr)
         {
-          _instance = new Singleton();
+          _instance = new Singleton(); 
+          //new过程不安全,底层执行存在代码执行顺序问题,如果先指向,再写数据,在指向成功后,指针就不为nullptr,此后其他线程就能直接使用这块空间,如果还未初始化完毕,此时使用这块内存就会出现问题.因此存在这样的安全隐患.
         }
       }
       return _instance;
@@ -255,6 +257,8 @@ int main()
 [静态局部变量](https://zh.cppreference.com/w/cpp/language/storage_duration#.E9.9D.99.E6.80.81.E5.B1.80.E9.83.A8.E5.8F.98.E9.87.8F)
 
 ![image-20240524150658606](README.assets/image-20240524150658606.png)
+
+>  C++11只保证静态局部(函数体内)变量初始化的线程安全
 
 ```
 #include<iostream>
@@ -336,6 +340,62 @@ int main() {
 ```
 
 ![image-20240628223634392](README.assets/image-20240628223634392.png)
+
+##### 懒汉模式示例4
+
+C++11原子变量+双检查加锁
+
+```
+#include <iostream>
+#include <thread>
+#include<chrono>
+#include<string>
+#include<queue>
+#include<mutex>
+
+class BlockQueue {
+public:
+    BlockQueue(const BlockQueue& q) = delete;
+    BlockQueue& operator=(const BlockQueue& q) = delete;
+
+    void Push() {
+
+    }
+
+    void Pop() {
+
+    }
+
+    static BlockQueue& GetInstance() {
+        if (_instance.load() == nullptr) {
+            std::lock_guard<std::mutex>lg(_mtx);
+            if (_instance.load() == nullptr) {
+                _instance.store(new BlockQueue); //内存顺序不会打乱,安全
+            }
+        }
+        return *(_instance.load());
+    }
+
+private:
+    BlockQueue() {}
+    std::queue<int> _q;
+    int _capacity = 5;
+    static std::mutex _mtx;
+    static std::atomic<BlockQueue*> _instance;
+};
+std::atomic<BlockQueue*> BlockQueue::_instance = nullptr;
+std::mutex BlockQueue::_mtx;
+
+
+int main() {
+    BlockQueue::GetInstance();
+    return 0;
+}
+```
+
+
+
+
 
 
 
