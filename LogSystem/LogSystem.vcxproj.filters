@@ -23,7 +23,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\README.md">
+    <None Include="..\日志系统设计文档.md">
       <Filter>源文件</Filter>
     </None>
   </ItemGroup>
