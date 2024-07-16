@@ -103,6 +103,7 @@ public:
     }
 };
 
+//柴油
 class DieselEngine :public Engine {
 public:
     std::string getEngine() {
@@ -141,32 +142,64 @@ public:
 //船
 class Ship {
 public:
-    Ship(ShipBody* shipbody, Weapen* weapen, Engine* engine)
+    Ship(std::shared_ptr<ShipBody> shipbody, std::shared_ptr<Weapen> weapen, std::shared_ptr<Engine> engine)
         :_shipbody(shipbody), _weapen(weapen), _engine(engine)
-    { 
-        std::cout<<"造船"<<"\n";
+    {
+        std::cout << "造船" << "\n";
     }
 
     std::string getShipInfo() {
         return "船结构 = " + _shipbody->GetShipBody() + _weapen->GetWeapen() + _engine->getEngine();
     }
-    ~Ship() {
-        delete _shipbody;
-        delete _weapen;
-        delete _engine;
-    };
+    ~Ship() {};
 private:
-    ShipBody* _shipbody = nullptr;
-    Weapen* _weapen;
-    Engine* _engine;
+    std::shared_ptr<ShipBody> _shipbody;
+    std::shared_ptr<Weapen> _weapen;
+    std::shared_ptr<Engine> _engine;
 };
 
 
-    //工厂
+//工厂
+class ShipFactory {
+public:
+    virtual std::shared_ptr<Ship> CreateShip() = 0;
+    virtual ~ShipFactory() {};
+};
 
-    int main() {
-        Ship s(new WoodShipBody,new GunWeapen,new HumanEngine);
-        std::cout<<s.getShipInfo()<<"\n";
+//基础版
+class BasicShipFactory :public ShipFactory {
+public:
+    std::shared_ptr<Ship> CreateShip()override {
+        return  std::make_shared<Ship>(std::make_shared<WoodShipBody>(), std::make_shared<GunWeapen>(), std::make_shared<HumanEngine>());
+    }
+};
+
+//标准版
+class StandardShipFactory :public ShipFactory {
+public:
+    std::shared_ptr<Ship> CreateShip()override {
+        return  std::make_shared<Ship>(std::make_shared<IronShipBody>(), std::make_shared<CannonWeapen>(), std::make_shared<DieselEngine>());
+    }
+};
+
+//旗舰版 
+class UltimateShipFactory :public ShipFactory {
+public:
+    std::shared_ptr<Ship> CreateShip()override {
+        return  std::make_shared<Ship>(std::make_shared<MetalShipBody>(), std::make_shared<MissileWeapen>(), std::make_shared<NuclearEngine>());
+    }
+};
+
+
+int main() {
+    BasicShipFactory bsf; 
+    StandardShipFactory ssf;
+    UltimateShipFactory usf;
+
+    auto foo1 = bsf.CreateShip();
+    auto foo2 = ssf.CreateShip();
+    auto foo3 = usf.CreateShip();
+
 
     return 0;
 }
