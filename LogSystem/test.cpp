@@ -2,146 +2,171 @@
 #include<memory>
 #include<thread>
 #include<future>
+#include<string>
 
 
-class Bullet {
+//船体
+class ShipBody {
 public:
-    //伤害
-    virtual int Attack() = 0;
-    virtual ~Bullet() {};
+    virtual std::string GetShipBody() = 0;
+    virtual ~ShipBody() {}
 };
 
-//金子弹
-class GoldBullet :public Bullet {
+//木材船体
+class WoodShipBody :public ShipBody {
 public:
-    GoldBullet() {
-        std::cout << "金子弹" << std::endl;
+    std::string GetShipBody() override {
+        return "<船体:木材> ";
     }
-    virtual int Attack() override {
-        return 3;
-    }
-    virtual ~GoldBullet()override {
-        std::cout << "销毁 金子弹" << std::endl;
-    }
-};
-
-//银子弹
-class SilverBullet : public Bullet {
-public:
-    SilverBullet() {
-        std::cout << "银子弹" << std::endl;
-    }
-    virtual int Attack() override {
-        return 2;
-    }
-    virtual ~SilverBullet()override {
-        std::cout << "销毁 银子弹" << std::endl;
+    ~WoodShipBody()override {
+        std::cout << "销毁 <船体:木材>" << "\n";
     }
 };
 
-//铜子弹
-class CopperBullet : public Bullet {
+//钢铁船体
+class IronShipBody :public ShipBody {
 public:
-    CopperBullet() {
-        std::cout << "铜子弹" << std::endl;
+    std::string GetShipBody() override {
+        return "<船体:钢铁> ";
     }
-    virtual int Attack() override {
-        return 1;
+    ~IronShipBody()override {
+        std::cout << "销毁 <船体:钢铁>" << "\n";
     }
-    virtual ~CopperBullet()override {
-        std::cout << "销毁 铜子弹" << std::endl;
+};
+
+//合金
+class MetalShipBody :public ShipBody {
+public:
+    std::string GetShipBody() override {
+        return "<船体:合金> ";
+    }
+    ~MetalShipBody()override {
+        std::cout << "销毁 <船体:合金>" << "\n";
+    }
+};
+
+//武器
+class Weapen {
+public:
+    virtual std::string GetWeapen() = 0;
+    virtual ~Weapen() {}
+};
+
+
+class GunWeapen :public Weapen {
+public:
+    std::string GetWeapen()override {
+        return "<武器:火枪>";
+    }
+    ~GunWeapen() override {
+        std::cout << "销毁 <武器:火枪>" << "\n";
+    }
+};
+
+//机炮,加农炮
+class CannonWeapen :public Weapen {
+public:
+    std::string GetWeapen()override {
+        return "<武器:机炮>";
+    }
+    ~CannonWeapen() override {
+        std::cout << "销毁 <武器:机炮>" << "\n";
+    }
+};
+
+//导弹
+class MissileWeapen :public Weapen {
+public:
+    std::string GetWeapen()override {
+        return "<武器:导弹>";
+    }
+    ~MissileWeapen() override {
+        std::cout << "销毁 <武器:导弹>" << "\n";
+    }
+};
+
+//引擎
+class Engine {
+public:
+    virtual std::string getEngine() = 0;
+    virtual ~Engine() {};
+};
+
+//人力发动机
+class HumanEngine :public Engine {
+public:
+    std::string getEngine()override {
+        return "<引擎:人力>";
+    }
+    ~HumanEngine() {
+        std::cout << "销毁 <引擎:人力>" << "\n";
+    }
+};
+
+class DieselEngine :public Engine {
+public:
+    std::string getEngine() {
+        return "<引擎:柴油>";
+    }
+    ~DieselEngine() {
+        std::cout << "销毁 <引擎:柴油>" << "\n";
     }
 };
 
 
-class BulletFactory {
+//电能发动机
+class ElectricEngine :public Engine {
 public:
-    virtual std::shared_ptr<Bullet> CreateBullet() = 0;
-    virtual ~BulletFactory() {};
-};
-
-class GoldBulletFactory :public BulletFactory {
-public:
-    GoldBulletFactory() {
-        std::cout << "构造 金子弹工厂" << "\n";
+    std::string getEngine()override {
+        return "<引擎:电能>";
     }
-    ~GoldBulletFactory() {
-        std::cout << "销毁 金子弹工厂" << "\n";
-    }
-    std::shared_ptr<Bullet> CreateBullet() {
-        return std::make_shared<GoldBullet>();
-    }
-};
-class SilverBulletFactory :public BulletFactory {
-public:
-    SilverBulletFactory() {
-        std::cout << "构造 银子弹工厂" << "\n";
-    }
-    ~SilverBulletFactory() {
-        std::cout << "销毁 银子弹工厂" << "\n";
-    }
-    std::shared_ptr<Bullet> CreateBullet() {
-        return std::make_shared<SilverBullet>();
-    }
-};
-class CopperBulletFactory :public BulletFactory {
-public:
-    CopperBulletFactory() {
-        std::cout << "构造 铜子弹工厂" << "\n";
-    }
-    ~CopperBulletFactory() {
-        std::cout << "销毁 铜子弹工厂" << "\n";
-    }
-    std::shared_ptr<Bullet> CreateBullet() {
-        return std::make_shared<CopperBullet>();
+    ~ElectricEngine() {
+        std::cout << "销毁 <引擎:电能>" << "\n";
     }
 };
 
-enum class BulletType :int { gold, silver, copper };
-//生产工厂的工厂()
-class FactoryFactory {
+//核能发动机
+class NuclearEngine :public Engine {
 public:
-    std::shared_ptr<BulletFactory> CreateFactory(BulletType type) {
-        switch (type) {
-        case BulletType::gold:
-            return std::make_shared<GoldBulletFactory>();
-        case BulletType::silver:
-            return std::make_shared<SilverBulletFactory>();
-        case BulletType::copper:
-            return std::make_shared<CopperBulletFactory>();
-        default:
-            std::cout << "FactoryFactory::CreateFactory(BulletType type)--> BulletType member no exist " << "\n";
-            //TODO
-            break;
-        }
-        return nullptr;
+    std::string getEngine()override {
+        return "<引擎:核能>";
     }
-
+    ~NuclearEngine() {
+        std::cout << "销毁 <引擎:核能>" << "\n";
+    }
 };
 
-//射击
-void Shoot(std::shared_ptr<Bullet> bullet) {
-
-    std::cout << "造成伤害: " << bullet->Attack() << std::endl;
-}
-
-int main() {
-    //GoldBulletFactory gbf;
-    //SilverBulletFactory sbf;
-    //CopperBulletFactory cbf;
-
-    FactoryFactory ff;
-    auto gbf = ff.CreateFactory(BulletType::gold);
-    auto sbf = ff.CreateFactory(BulletType::silver);
-    auto cbf = ff.CreateFactory(BulletType::copper);
 
 
-
-    for (int i = 0; i < 2; i++) {
-        std::async(std::launch::async, Shoot, gbf->CreateBullet());
-        std::async(std::launch::async, Shoot, sbf->CreateBullet());
-        std::async(std::launch::async, Shoot, cbf->CreateBullet());
+//船
+class Ship {
+public:
+    Ship(ShipBody* shipbody, Weapen* weapen, Engine* engine)
+        :_shipbody(shipbody), _weapen(weapen), _engine(engine)
+    { 
+        std::cout<<"造船"<<"\n";
     }
+
+    std::string getShipInfo() {
+        return "船结构 = " + _shipbody->GetShipBody() + _weapen->GetWeapen() + _engine->getEngine();
+    }
+    ~Ship() {
+        delete _shipbody;
+        delete _weapen;
+        delete _engine;
+    };
+private:
+    ShipBody* _shipbody = nullptr;
+    Weapen* _weapen;
+    Engine* _engine;
+};
+
+
+    //工厂
+
+    int main() {
+        Ship s(new WoodShipBody,new GunWeapen,new HumanEngine);
+        std::cout<<s.getShipInfo()<<"\n";
 
     return 0;
 }
