@@ -51,43 +51,97 @@ public:
     virtual ~CopperBullet()override {
         std::cout << "销毁 铜子弹" << std::endl;
     }
+};
 
+
+class BulletFactory {
+public:
+    virtual std::shared_ptr<Bullet> CreateBullet() = 0;
+    virtual ~BulletFactory() {};
+};
+
+class GoldBulletFactory :public BulletFactory {
+public:
+    GoldBulletFactory() {
+        std::cout << "构造 金子弹工厂" << "\n";
+    }
+    ~GoldBulletFactory() {
+        std::cout << "销毁 金子弹工厂" << "\n";
+    }
+    std::shared_ptr<Bullet> CreateBullet() {
+        return std::make_shared<GoldBullet>();
+    }
+};
+class SilverBulletFactory :public BulletFactory {
+public:
+    SilverBulletFactory() {
+        std::cout << "构造 银子弹工厂" << "\n";
+    }
+    ~SilverBulletFactory() {
+        std::cout << "销毁 银子弹工厂" << "\n";
+    }
+    std::shared_ptr<Bullet> CreateBullet() {
+        return std::make_shared<SilverBullet>();
+    }
+};
+class CopperBulletFactory :public BulletFactory {
+public:
+    CopperBulletFactory() {
+        std::cout << "构造 铜子弹工厂" << "\n";
+    }
+    ~CopperBulletFactory() {
+        std::cout << "销毁 铜子弹工厂" << "\n";
+    }
+    std::shared_ptr<Bullet> CreateBullet() {
+        return std::make_shared<CopperBullet>();
+    }
 };
 
 enum class BulletType :int { gold, silver, copper };
-class BulletFactory {
+//生产工厂的工厂()
+class FactoryFactory {
 public:
-    std::shared_ptr<Bullet> CreateBullet(BulletType type) {
+    std::shared_ptr<BulletFactory> CreateFactory(BulletType type) {
         switch (type) {
         case BulletType::gold:
-            //return new GoldBullet;                //错误
-            return std::make_shared<GoldBullet>();
+            return std::make_shared<GoldBulletFactory>();
         case BulletType::silver:
-            return std::make_shared<SilverBullet>();
+            return std::make_shared<SilverBulletFactory>();
         case BulletType::copper:
-            return std::make_shared<CopperBullet>();
+            return std::make_shared<CopperBulletFactory>();
         default:
-            std::cout << "CreateBullet type error" << std::endl;
+            std::cout << "FactoryFactory::CreateFactory(BulletType type)--> BulletType member no exist " << "\n";
             //TODO
-            return nullptr;
+            break;
         }
+        return nullptr;
     }
+
 };
 
 //射击
-void Shoot(std::shared_ptr<Bullet> bullet){
-     
-    std::cout<<"造成伤害: "<<bullet->Attack()<<std::endl;
+void Shoot(std::shared_ptr<Bullet> bullet) {
+
+    std::cout << "造成伤害: " << bullet->Attack() << std::endl;
 }
 
 int main() {
-    BulletFactory factory;
+    //GoldBulletFactory gbf;
+    //SilverBulletFactory sbf;
+    //CopperBulletFactory cbf;
 
-    for (int i = 0; i < 1; i++) {
-        std::async(std::launch::async|std::launch::deferred,Shoot,factory.CreateBullet(BulletType::gold));
-        std::async(Shoot,factory.CreateBullet(BulletType::silver));
-        std::async(Shoot,factory.CreateBullet(BulletType::copper));
+    FactoryFactory ff;
+    auto gbf = ff.CreateFactory(BulletType::gold);
+    auto sbf = ff.CreateFactory(BulletType::silver);
+    auto cbf = ff.CreateFactory(BulletType::copper);
+
+
+
+    for (int i = 0; i < 2; i++) {
+        std::async(std::launch::async, Shoot, gbf->CreateBullet());
+        std::async(std::launch::async, Shoot, sbf->CreateBullet());
+        std::async(std::launch::async, Shoot, cbf->CreateBullet());
     }
-        
+
     return 0;
 }
