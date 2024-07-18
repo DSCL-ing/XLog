@@ -46,41 +46,41 @@ public:
 };
 
 //武器
-class Weapen {
+class Weapon {
 public:
-    virtual std::string GetWeapen() = 0;
-    virtual ~Weapen() {}
+    virtual std::string GetWeapon() = 0;
+    virtual ~Weapon() {}
 };
 
 
-class GunWeapen :public Weapen {
+class GunWeapon :public Weapon {
 public:
-    std::string GetWeapen()override {
+    std::string GetWeapon()override {
         return "<武器:火枪>";
     }
-    ~GunWeapen() override {
+    ~GunWeapon() override {
         std::cout << "销毁 <武器:火枪>" << "\n";
     }
 };
 
 //机炮,加农炮
-class CannonWeapen :public Weapen {
+class CannonWeapon :public Weapon {
 public:
-    std::string GetWeapen()override {
+    std::string GetWeapon()override {
         return "<武器:机炮>";
     }
-    ~CannonWeapen() override {
+    ~CannonWeapon() override {
         std::cout << "销毁 <武器:机炮>" << "\n";
     }
 };
 
 //导弹
-class MissileWeapen :public Weapen {
+class MissileWeapon :public Weapon {
 public:
-    std::string GetWeapen()override {
+    std::string GetWeapon()override {
         return "<武器:导弹>";
     }
-    ~MissileWeapen() override {
+    ~MissileWeapon() override {
         std::cout << "销毁 <武器:导弹>" << "\n";
     }
 };
@@ -142,19 +142,19 @@ public:
 //船
 class Ship {
 public:
-    Ship(std::shared_ptr<ShipBody> shipbody, std::shared_ptr<Weapen> weapen, std::shared_ptr<Engine> engine)
-        :_shipbody(shipbody), _weapen(weapen), _engine(engine)
+    Ship(std::shared_ptr<ShipBody> shipbody, std::shared_ptr<Weapon> weapon, std::shared_ptr<Engine> engine)
+        :_shipbody(shipbody), _weapon(weapon), _engine(engine)
     {
         std::cout << "造船" << "\n";
     }
 
     std::string getShipInfo() {
-        return "船结构 = " + _shipbody->GetShipBody() + _weapen->GetWeapen() + _engine->getEngine();
+        return "船结构 = " + _shipbody->GetShipBody() + _weapon->GetWeapon() + _engine->getEngine();
     }
     ~Ship() {};
 private:
     std::shared_ptr<ShipBody> _shipbody;
-    std::shared_ptr<Weapen> _weapen;
+    std::shared_ptr<Weapon> _weapon;
     std::shared_ptr<Engine> _engine;
 };
 
@@ -170,7 +170,7 @@ public:
 class BasicShipFactory :public ShipFactory {
 public:
     std::shared_ptr<Ship> CreateShip()override {
-        return  std::make_shared<Ship>(std::make_shared<WoodShipBody>(), std::make_shared<GunWeapen>(), std::make_shared<HumanEngine>());
+        return  std::make_shared<Ship>(std::make_shared<WoodShipBody>(), std::make_shared<GunWeapon>(), std::make_shared<HumanEngine>());
     }
 };
 
@@ -178,7 +178,7 @@ public:
 class StandardShipFactory :public ShipFactory {
 public:
     std::shared_ptr<Ship> CreateShip()override {
-        return  std::make_shared<Ship>(std::make_shared<IronShipBody>(), std::make_shared<CannonWeapen>(), std::make_shared<DieselEngine>());
+        return  std::make_shared<Ship>(std::make_shared<IronShipBody>(), std::make_shared<CannonWeapon>(), std::make_shared<DieselEngine>());
     }
 };
 
@@ -186,7 +186,7 @@ public:
 class UltimateShipFactory :public ShipFactory {
 public:
     std::shared_ptr<Ship> CreateShip()override {
-        return  std::make_shared<Ship>(std::make_shared<MetalShipBody>(), std::make_shared<MissileWeapen>(), std::make_shared<NuclearEngine>());
+        return  std::make_shared<Ship>(std::make_shared<MetalShipBody>(), std::make_shared<MissileWeapon>(), std::make_shared<NuclearEngine>());
     }
 };
 
@@ -196,10 +196,9 @@ int main() {
     StandardShipFactory ssf;
     UltimateShipFactory usf;
 
-    auto foo1 = bsf.CreateShip();
+    std::shared_ptr<Ship> foo1 = bsf.CreateShip();
     auto foo2 = ssf.CreateShip();
     auto foo3 = usf.CreateShip();
-
 
     return 0;
 }
