@@ -1,27 +1,12 @@
 
-#include<iostream>
-#include<fstream>
-#include<thread>
 
+#include"util.hpp"
 
 int main(){
-  while(1){
-    std::ifstream ifs("test.cc");
-    if(ifs.is_open()){
-      std::cout<<"true1"<<std::endl;
-    }
-    else{
-      std::cout<<"false1"<<std::endl;
-    }
-    if(ifs.good()){
-      std::cout<<"true2"<<std::endl;
-    }
-    else{
-      std::cout<<"false2"<<std::endl;
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
+  time_t t = log::util::DateUtil::getCurTime();
+  std::cout<<ctime(&t)<<"\n";
+  std::string pathname = "abc/def/g/test.txt";
+  log::util::FileUtil::createDirectory(log::util::FileUtil::getPath(pathname));
 
+  return 0;
 }
-
-
