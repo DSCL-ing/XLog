@@ -1,204 +1,92 @@
 ﻿#include<iostream>
 #include<memory>
-#include<thread>
-#include<future>
 #include<string>
 
+class Computer {
 
-//船体
-class ShipBody {
 public:
-    virtual std::string GetShipBody() = 0;
-    virtual ~ShipBody() {}
+    void setBoard(const std::string& board) {
+        _board = board;
+    }
+    void setDisplay(const std::string& display) {
+        _display = display;
+    }
+    virtual void setOs() = 0;
+
+    std::string toString() {
+        std::string computer = "Computer:{\n";
+        computer += "\tboard=" + _board + ",\n";
+        computer += "\tdisplay=" + _display + ",\n";
+        computer += "\tOs=" + _os + ",\n";
+        computer += "}\n";
+        return computer;
+    }
+
+protected:
+    std::string _board;
+    std::string _display;
+    std::string _os;
 };
 
-//木材船体
-class WoodShipBody :public ShipBody {
+/*具体产品类*/
+class MacBook : public Computer {
 public:
-    std::string GetShipBody() override {
-        return "<船体:木材> ";
-    }
-    ~WoodShipBody()override {
-        std::cout << "销毁 <船体:木材>" << "\n";
-    }
-};
-
-//钢铁船体
-class IronShipBody :public ShipBody {
-public:
-    std::string GetShipBody() override {
-        return "<船体:钢铁> ";
-    }
-    ~IronShipBody()override {
-        std::cout << "销毁 <船体:钢铁>" << "\n";
-    }
-};
-
-//合金
-class MetalShipBody :public ShipBody {
-public:
-    std::string GetShipBody() override {
-        return "<船体:合金> ";
-    }
-    ~MetalShipBody()override {
-        std::cout << "销毁 <船体:合金>" << "\n";
+    using ptr = std::shared_ptr<MacBook>;
+    MacBook() {}
+    virtual void setOs() {
+        _os = "Max OS";
     }
 };
 
-//武器
-class Weapon {
+/*抽象建造者类：包含创建⼀个产品对象的各个部件的抽象接⼝*/
+class Builder {
 public:
-    virtual std::string GetWeapon() = 0;
-    virtual ~Weapon() {}
+    virtual void buildBoard(const std::string& board) = 0;
+    virtual void buildDisplay(const std::string& display) = 0;
+    virtual void buildOs() = 0;
+    virtual std::shared_ptr<Computer> build() = 0;
 };
 
-
-class GunWeapon :public Weapon {
+/*具体产品的具体建造者类：实现抽象接⼝，构建和组装各个部件*/
+class MacBookBuilder : public Builder {
 public:
-    std::string GetWeapon()override {
-        return "<武器:火枪>";
+    MacBookBuilder() : _computer(new MacBook()) {}
+    virtual void buildBoard(const std::string& board) {
+        _computer->setBoard(board);
     }
-    ~GunWeapon() override {
-        std::cout << "销毁 <武器:火枪>" << "\n";
+    virtual void buildDisplay(const std::string& display) {
+        _computer->setDisplay(display);
     }
+    virtual void buildOs() {
+        _computer->setOs();
+    }
+    std::shared_ptr<Computer> build()override {
+        return _computer;
+    }
+
+    private:
+    std::shared_ptr<Computer> _computer;
 };
 
-//机炮,加农炮
-class CannonWeapon :public Weapon {
+/*指挥者类，提供给调⽤者使⽤，通过指挥者来构造复杂产品*/
+class Director {
 public:
-    std::string GetWeapon()override {
-        return "<武器:机炮>";
+    Director(Builder* builder) :_builder(builder) {}
+    void construct(const std::string& board, const std::string& display) {
+        _builder->buildBoard(board);
+        _builder->buildDisplay(display);
+        _builder->buildOs();
     }
-    ~CannonWeapon() override {
-        std::cout << "销毁 <武器:机炮>" << "\n";
-    }
-};
-
-//导弹
-class MissileWeapon :public Weapon {
-public:
-    std::string GetWeapon()override {
-        return "<武器:导弹>";
-    }
-    ~MissileWeapon() override {
-        std::cout << "销毁 <武器:导弹>" << "\n";
-    }
-};
-
-//引擎
-class Engine {
-public:
-    virtual std::string getEngine() = 0;
-    virtual ~Engine() {};
-};
-
-//人力发动机
-class HumanEngine :public Engine {
-public:
-    std::string getEngine()override {
-        return "<引擎:人力>";
-    }
-    ~HumanEngine() {
-        std::cout << "销毁 <引擎:人力>" << "\n";
-    }
-};
-
-//柴油
-class DieselEngine :public Engine {
-public:
-    std::string getEngine() {
-        return "<引擎:柴油>";
-    }
-    ~DieselEngine() {
-        std::cout << "销毁 <引擎:柴油>" << "\n";
-    }
-};
-
-
-//电能发动机
-class ElectricEngine :public Engine {
-public:
-    std::string getEngine()override {
-        return "<引擎:电能>";
-    }
-    ~ElectricEngine() {
-        std::cout << "销毁 <引擎:电能>" << "\n";
-    }
-};
-
-//核能发动机
-class NuclearEngine :public Engine {
-public:
-    std::string getEngine()override {
-        return "<引擎:核能>";
-    }
-    ~NuclearEngine() {
-        std::cout << "销毁 <引擎:核能>" << "\n";
-    }
-};
-
-
-
-//船
-class Ship {
-public:
-    Ship(std::shared_ptr<ShipBody> shipbody, std::shared_ptr<Weapon> weapon, std::shared_ptr<Engine> engine)
-        :_shipbody(shipbody), _weapon(weapon), _engine(engine)
-    {
-        std::cout << "造船" << "\n";
-    }
-
-    std::string getShipInfo() {
-        return "船结构 = " + _shipbody->GetShipBody() + _weapon->GetWeapon() + _engine->getEngine();
-    }
-    ~Ship() {};
 private:
-    std::shared_ptr<ShipBody> _shipbody;
-    std::shared_ptr<Weapon> _weapon;
-    std::shared_ptr<Engine> _engine;
+    std::shared_ptr<Builder> _builder;
 };
 
-
-//工厂
-class ShipFactory {
-public:
-    virtual std::shared_ptr<Ship> CreateShip() = 0;
-    virtual ~ShipFactory() {};
-};
-
-//基础版
-class BasicShipFactory :public ShipFactory {
-public:
-    std::shared_ptr<Ship> CreateShip()override {
-        return  std::make_shared<Ship>(std::make_shared<WoodShipBody>(), std::make_shared<GunWeapon>(), std::make_shared<HumanEngine>());
-    }
-};
-
-//标准版
-class StandardShipFactory :public ShipFactory {
-public:
-    std::shared_ptr<Ship> CreateShip()override {
-        return  std::make_shared<Ship>(std::make_shared<IronShipBody>(), std::make_shared<CannonWeapon>(), std::make_shared<DieselEngine>());
-    }
-};
-
-//旗舰版 
-class UltimateShipFactory :public ShipFactory {
-public:
-    std::shared_ptr<Ship> CreateShip()override {
-        return  std::make_shared<Ship>(std::make_shared<MetalShipBody>(), std::make_shared<MissileWeapon>(), std::make_shared<NuclearEngine>());
-    }
-};
-
-
-int main() {
-    BasicShipFactory bsf; 
-    StandardShipFactory ssf;
-    UltimateShipFactory usf;
-
-    std::shared_ptr<Ship> foo1 = bsf.CreateShip();
-    auto foo2 = ssf.CreateShip();
-    auto foo3 = usf.CreateShip();
-
+int main()
+{
+    Builder* buidler = new MacBookBuilder;
+    std::unique_ptr<Director> pd(new Director(buidler));
+    pd->construct("英特尔", "AOC显示器");
+    auto computer = buidler->build();
+    std::cout << computer->toString();
     return 0;
 }
