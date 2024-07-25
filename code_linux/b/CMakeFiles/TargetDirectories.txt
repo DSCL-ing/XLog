@@ -1,3 +1,0 @@
-/home/chj/git_repositorier/LogSystem/code_linux/b/CMakeFiles/log.dir
-/home/chj/git_repositorier/LogSystem/code_linux/b/CMakeFiles/edit_cache.dir
-/home/chj/git_repositorier/LogSystem/code_linux/b/CMakeFiles/rebuild_cache.dir

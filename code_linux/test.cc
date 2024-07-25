@@ -1,12 +1,14 @@
 
 #include"level.hpp"
 #include"util.hpp"
+#include"message.hpp"
+#include"format.hpp"
 
 void Test_Util(){
-  time_t t = log::DateUtil::getCurTime();
+  time_t t = log::util::DateUtil::getCurTime();
   std::cout<<ctime(&t)<<"\n";
   std::string pathname = "abc/def/g/test.txt";
-  log::FileUtil::createDirectory(log::FileUtil::getPath(pathname));
+  log::util::FileUtil::createDirectory(log::util::FileUtil::getPath(pathname));
 }
 
 void Test_LogLevel(){

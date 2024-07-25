@@ -9,3 +9,5 @@ file(GLOB HDR_LIST  "./*.h*")
 
 
 add_executable(${PROJECT_NAME} ${M_SRC} ${HDR_LIST})
+
+message("${}")

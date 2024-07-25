@@ -11,6 +11,8 @@
 
 
 namespace log{
+  namespace util{
+
     class DateUtil{
       public:
         static time_t getCurTime(){
@@ -61,6 +63,7 @@ namespace log{
 
     }; //CLASS_FileUtil__END
 
+  } //namespace_util_END
 } //namespace_Log__END
 
 
