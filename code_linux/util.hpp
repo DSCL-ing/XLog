@@ -9,14 +9,14 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 
+
 namespace log{
-  namespace util{
     class DateUtil{
       public:
         static time_t getCurTime(){
           return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         }
-    };
+    }; //CLASS_DataUtil_END
 
     class FileUtil{
       public:
@@ -50,7 +50,7 @@ namespace log{
               mkdir(pathname.c_str(),0777); //直接传文件名或空字符串
               break; //防止npos+1归零导致死循环
             }
-            std::string parent_dir = pathname.substr(0,pos+1);  //pos-idx == 父目录的长度,加上1也可以,表示/abc/
+            std::string parent_dir = pathname.substr(0,pos);  //pos-0 == 父目录的长度
             if(!exists(parent_dir)){  // ".", "..", "../", "./"等,都是已存在
               mkdir(parent_dir.c_str(),0777);
             }
@@ -59,10 +59,9 @@ namespace log{
 
         }
 
-    };
+    }; //CLASS_FileUtil__END
 
-  }
-}
+} //namespace_Log__END
 
 
 #endif

@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-7/root/usr/bin/c++ CMakeFiles/log.dir/main.cc.o CMakeFiles/log.dir/test.cc.o -o ../bin/log 
