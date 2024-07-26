@@ -9,8 +9,9 @@ FLAG = -std=c++11 -lpthread
 
 .PHONY:all
 all: $(SRC) 
-	$(CXX) $(SRC) $(FLAG) -o test #-g
+	$(CXX) $(SRC) $(FLAG) -o test -g
 
 .PHONY:clean
 clean:
 	rm -rf test
+	rm -rf logs

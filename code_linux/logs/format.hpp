@@ -218,7 +218,7 @@ namespace log{
 
         std::string key; 
         std::string value;
-        std::vector<std::pair<std::string,std::string>> _order; //键值对序列
+        std::vector<std::pair<std::string,std::string>> order; //键值对序列
         
         while(pos<_pattern.size()){
 
@@ -240,7 +240,7 @@ namespace log{
 
           //走到这里,原始字符串处理完毕
           if(!value.empty()){ //开始为格式字符,即跳过了非格式字符处理流程时,安全处理
-            _order.push_back(std::make_pair("",value));
+            order.push_back(std::make_pair("",value));
             value.clear(); //已存储,清空重新使用
           }
 
@@ -256,26 +256,27 @@ namespace log{
           //检查是否是子项,处理带子项的格式字符,如%d{}
           if(pos<_pattern.size()&&_pattern[pos]=='{'){
             pos+=1; //不存储括号
-              while(pos<_pattern.size()&&_pattern[pos]!='}'){
-                value+=_pattern[pos]; //存储格式字符value
-                pos+=1;
-              }
-              //循环结束,如果此时pos!=_pattern.size(),则处理完毕,如果不是,则说明异常
-              //
-              //因为不存储花括号,只要在末尾前遇到'}'就会结束循环,末尾时还没匹配到,则说明异常
-              if(pos==_pattern.size()){ 
-                std::cout<<"规则错误,子规则{}匹配出错"<<"\n";
-                return false;
-              }
+            while(pos<_pattern.size()&&_pattern[pos]!='}'){
+              value+=_pattern[pos]; //存储格式字符value
+              pos+=1;
+            }
+            //循环结束,如果此时pos!=_pattern.size(),则处理完毕,如果不是,则说明异常
+            //
+            //因为不存储花括号,只要在末尾前遇到'}'就会结束循环,末尾时还没匹配到,则说明异常
+            if(pos==_pattern.size()){ 
+              std::cout<<"规则错误,子规则{}匹配出错"<<"\n";
+              return false;
+            }
+            pos+=1; //此时pos在'}'位置,向后走一步,走到下次处理的位置
           }
           //存储格式字符pair
-          _order.push_back(std::make_pair(key,value));
+          order.push_back(std::make_pair(key,value));
           key.clear();
           value.clear();
         }
 
         //将存储的结果输出--映射关系
-        for(auto& it:_order){
+        for(auto& it:order){
           //std::cout<<it.first<<" "<<it.second<<"\n";
           _items.push_back(createItem(it.first,it.second));
         }
