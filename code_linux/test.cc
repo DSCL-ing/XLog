@@ -21,7 +21,14 @@ void Test_LogLevel(){
   std::cout<<log::LogLevel::toString(log::LogLevel::Value::UNKNOW)<<"\n";
 }
 
+void Test_Formatter(){
+  log::LogMsg msg(log::LogLevel::Value::DEBUG,"test.cc",12,"root","创建文件失败");
+  log::Formatter fmt("abc[%d{%H:%M:%S}]%%%[%t][%p][%c][%f:%l]%T %m%n"); 
+  std::cout<<fmt.format(msg);
+}
+
 int main(){
-  Test_LogLevel();
+  //Test_LogLevel();
+  Test_Formatter();
   return 0;
 }
