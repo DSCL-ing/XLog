@@ -61,6 +61,7 @@ void  Test_LogSink(){
 }
 
 void Test_Logger(){
+  //直接零部件构造太麻烦 --> 建造者模式,简化使用复杂度
   std::shared_ptr<log::LogSink> lsp1 = log::SinkFactory::create<log::StdoutSink>();
   auto lsp2 = log::SinkFactory::create<log::FileSink>("logsByFile/test.log");
   auto lsp3 = log::SinkFactory::create<log::RollBySizeSink>("logsBySize/roll-",1024*1024);
@@ -77,6 +78,24 @@ void Test_Logger(){
     sl.error(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
     sl.fatal(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
   }
+}
+
+void Test_Builder(){
+  std::unique_ptr<log::LoggerBuilder> builder (new log::LocalLoggerBuilder());
+  builder->buildFormatter(nullptr);
+  builder->buildLoggerLevel(log::LogLevel::Value::DEBUG);
+  builder->buildLoggerName("root");
+  // builder->buildLoggerType();
+  //builder->buildSink();
+  auto  sl= builder->build();
+  time_t start_time = log::util::DateUtil::getCurTime();
+  size_t count = 0;
+  while(log::util::DateUtil::getCurTime()<start_time+5){
+    sl->debug(__FILE__,__LINE__,"%s-%d","打开文件失败",count++);
+    sl->info(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
+    sl->warn(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
+    sl->error(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
+    sl->fatal(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
 }
 
 int main(){

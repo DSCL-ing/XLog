@@ -148,7 +148,7 @@ namespace log{
      */
     
     public:
-      Formatter(std::string pattern = "[%d{%H:%M:%S}][%t][%p][%c][%f:%l] %m%n")
+      Formatter(const std::string& pattern = "[%d{%H:%M:%S}][%t][%p][%c][%f:%l] %m%n")
         :_pattern(pattern)
         {
           assert(parsePattern());
