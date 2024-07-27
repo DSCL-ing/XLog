@@ -139,6 +139,8 @@ namespace log{
       std::string _str;
   };
 
+
+  //格式化器 
   class Formatter{
 
     /*
@@ -151,13 +153,12 @@ namespace log{
         {
           assert(parsePattern());
         }
-
       
       const std::string pattern() { return _pattern; }
 
       std::string format(const LogMsg& msg){
         std::stringstream ss;
-        format(ss,msg);
+        format(ss,msg); //父类引用/指针接收子类对象
         return ss.str();
       }
       

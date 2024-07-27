@@ -5,6 +5,7 @@
 #include"format.hpp"
 #include"sink.hpp"
 #include"my_sink.h"
+#include"logger.hpp"
 
 void Test_Util(){
   time_t t = log::util::DateUtil::getCurTime();
@@ -59,9 +60,29 @@ void  Test_LogSink(){
 
 }
 
+void Test_Logger(){
+  std::shared_ptr<log::LogSink> lsp1 = log::SinkFactory::create<log::StdoutSink>();
+  auto lsp2 = log::SinkFactory::create<log::FileSink>("logsByFile/test.log");
+  auto lsp3 = log::SinkFactory::create<log::RollBySizeSink>("logsBySize/roll-",1024*1024);
+  std::shared_ptr<log::LogSink> lsp4 = log::SinkFactory::create<RollbyTimeSink>("logsByTime/roll-",TimeGap::SECOND);
+  std::vector<std::shared_ptr<log::LogSink>> sinks{lsp1,lsp2,lsp3,lsp4};
+  log::SyncLogger sl("root",log::LogLevel::Value::INFO,std::make_shared<log::Formatter>("[%d{%H:%M:%S}][%t][%p][%c][%f:%l] %m%n"),sinks);
+
+  time_t start_time = log::util::DateUtil::getCurTime();
+  size_t count = 0;
+  while(log::util::DateUtil::getCurTime()<start_time+5){
+    sl.debug(__FILE__,__LINE__,"%s-%d","打开文件失败",count++);
+    sl.info(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
+    sl.warn(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
+    sl.error(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
+    sl.fatal(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
+  }
+}
+
 int main(){
   //Test_LogLevel();
   //Test_Formatter();
-  Test_LogSink();
+  //Test_LogSink();
+  Test_Logger();
   return 0;
 }

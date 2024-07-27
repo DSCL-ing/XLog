@@ -14,4 +14,4 @@ all: $(SRC)
 .PHONY:clean
 clean:
 	rm -rf test
-	rm -rf logs
+	rm -rf logs*

@@ -25,11 +25,12 @@ namespace log{
 
   struct LogMsg{
 
+    //日志优先级,文件,行号,日志器,数据
     LogMsg(LogLevel::Value level,
         const std::string filename,
         size_t line,
-        const std::string loggername,
-        const std::string msg)
+        const std::string& loggername,
+        const std::string& msg)
       :_time(util::DateUtil::getCurTime()),
       _loggername(loggername),
       _tid(std::this_thread::get_id()),
