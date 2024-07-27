@@ -17,6 +17,25 @@
 #include"level.hpp"
 
 namespace log{
+
+  /*
+    功能整合
+    向外提供接口,完成不同等级的日志输出
+  
+    不同等级日志落地功能
+
+    1.日志优先级
+    2.消息对象
+      不定参解析 (解析可变参数列表和输出格式,实现和printf相同的方式)
+      日志器名(唯一标识)
+    3.格式化
+    4.互斥输出(同步/异步)
+      互斥锁
+      落地模块数组(多落地位置)
+    
+   */
+
+  //日志器基类
   class Logger{
     public: 
       Logger(const std::string & logger_name,LogLevel::Value level,std::shared_ptr<Formatter> &formatter,std::vector<std::shared_ptr<LogSink>> &sinks)
