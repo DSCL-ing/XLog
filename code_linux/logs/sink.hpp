@@ -98,7 +98,7 @@ namespace log{
         ss<<_basename;
         ss<<tm.tm_year+1900;
         ss<<tm.tm_mon+1;
-        ss<<tm.tm_mday+1;
+        ss<<tm.tm_mday;
         ss<<tm.tm_hour;
         ss<<tm.tm_min;
         ss<<tm.tm_sec;

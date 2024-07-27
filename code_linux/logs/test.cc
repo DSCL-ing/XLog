@@ -4,6 +4,7 @@
 #include"message.hpp"
 #include"format.hpp"
 #include"sink.hpp"
+#include"my_sink.h"
 
 void Test_Util(){
   time_t t = log::util::DateUtil::getCurTime();
@@ -31,15 +32,29 @@ void Test_Formatter(){
 void  Test_LogSink(){
   //std::shared_ptr<log::LogSink> lsp = log::SinkFactory::create<log::StdoutSink>();
   //auto lsp = log::SinkFactory::create<log::FileSink>("logs/log");
-  auto lsp = log::SinkFactory::create<log::RollBySizeSink>("logs/roll-",1024*1024);
+  //auto lsp = log::SinkFactory::create<log::RollBySizeSink>("logs/roll-",1024*1024);
+  std::shared_ptr<log::LogSink> lsp = log::SinkFactory::create<RollbyTimeSink>("logs/roll-",TimeGap::SECOND);
 
-  log::LogMsg msg(log::LogLevel::Value::DEBUG,"test.cc",12,"root","创建文件失败");
   log::Formatter fmt;
-  std::string str = fmt.format(msg);
   int count = 0;
-  for(int i  = 0;i<1024*1024*10;i+=str.size()){
+
+  //size_Test
+  //for(int i  = 0;i<1024*1024*100;){
+  //log::LogMsg msg(log::LogLevel::Value::DEBUG,"test.cc",12,"root","创建文件失败");
+  //std::string str = fmt.format(msg);
+  //  std::string tmp = str+std::to_string(count++);
+  //  lsp->log(tmp.c_str(),tmp.size());
+  //  i+=str.size();
+  //}
+  
+  //time_Test
+  time_t start_time = log::util::DateUtil::getCurTime();
+  while(log::util::DateUtil::getCurTime()<start_time+5){
+    log::LogMsg msg(log::LogLevel::Value::DEBUG,"test.cc",12,"root","创建文件失败");
+    std::string str = fmt.format(msg);
     std::string tmp = str+std::to_string(count++);
     lsp->log(tmp.c_str(),tmp.size());
+
   }
 
 }
