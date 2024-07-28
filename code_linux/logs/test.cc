@@ -82,26 +82,31 @@ void Test_Logger(){
 
 void Test_Builder(){
   std::unique_ptr<log::LoggerBuilder> builder (new log::LocalLoggerBuilder());
-  builder->buildFormatter(nullptr);
-  builder->buildLoggerLevel(log::LogLevel::Value::DEBUG);
+  builder->buildFormatter();
+  // builder->buildLoggerLevel();
   builder->buildLoggerName("root");
+  builder->buildSink<RollbyTimeSink>("logsByTime/roll-",TimeGap::SECOND);
+  builder->buildSink<log::RollBySizeSink>("logsBySzie/roll-",1024*1024);
+  builder->buildSink<log::FileSink>("logsByfile");
   // builder->buildLoggerType();
   //builder->buildSink();
   auto  sl= builder->build();
   time_t start_time = log::util::DateUtil::getCurTime();
   size_t count = 0;
-  while(log::util::DateUtil::getCurTime()<start_time+5){
+  while(log::util::DateUtil::getCurTime()<start_time+2){
     sl->debug(__FILE__,__LINE__,"%s-%d","打开文件失败",count++);
     sl->info(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
     sl->warn(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
     sl->error(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
     sl->fatal(__FILE__,__LINE__,"%s-%d","打开文件失败",count);
 }
+}
 
 int main(){
   //Test_LogLevel();
   //Test_Formatter();
   //Test_LogSink();
-  Test_Logger();
+  //Test_Logger();
+  Test_Builder();
   return 0;
 }
