@@ -168,15 +168,14 @@ void Test_Buffer(){
 void Test_Async(){
   std::unique_ptr<log::LoggerBuilder> builder(new log::LocalLoggerBuilder());
   builder->buildLoggerName("root");
-  //builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
+  builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
   // builder->buildFormatter();
   // builder->buildLoggerLevel();
-  // builder->buildSink<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
-  // builder->buildSink<log::RollBySizeSink>("logsBySzie/roll-", 1024 * 1024);
+  builder->buildSink<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
+  builder->buildSink<log::RollBySizeSink>("logsBySzie/roll-", 1024 * 1024);
   //builder->buildEnableUnsafeAsync();
-  //builder->buildSink<log::FileSink>("logsByfile/async.log");
-  // builder->buildLoggerType();
-  builder->buildSink<log::StdoutSink>();
+  builder->buildSink<log::FileSink>("logsByfile/async.log");
+  // builder->buildSink<log::StdoutSink>();
   auto sl = builder->build();
   // time_t start_time = log::util::DateUtil::getCurTime();
   size_t count = 0;

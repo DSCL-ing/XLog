@@ -74,10 +74,15 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
            条件: 进入时消费者buf一定没有数据 ---> 等生产者通知
 
 */
+        
+
+        //通过_stop控制线程任务的启停
         void threadEntry(){
           while(1){
             {
               std::unique_lock<std::mutex> lock(_mutex);
+              //保证停止前输出完所有数据 -- 只要有数据就不停止
+              if (_stop == true && _buf_pro.empty()) { break; }
               //生产缓冲区为空时阻塞
               _cond_con.wait(lock,[&](){return _buf_pro.empty()?false:true;}); //捕获this
               //走到这里,不为空,取走数据
@@ -88,7 +93,6 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
             //2.数据处理,处理完毕后重置
             _callback(_buf_con); // 数据处理由外界负责,不加锁 --- 只有一个线程,即串行化,不需要保护
             _buf_con.reset();
-            if(_stop==true){ break; }
           }
         }
 
