@@ -14,6 +14,7 @@
 #include "format.hpp"
 #include "sink.hpp"
 #include "level.hpp"
+#include "looper.hpp"
 
 namespace log
 {
@@ -43,7 +44,7 @@ namespace log
   public:
     Logger(const std::string &logger_name,
            LogLevel::Value level,
-           std::shared_ptr<Formatter> formatter,
+           std::shared_ptr<Formatter>& formatter,
            std::vector<std::shared_ptr<LogSink>> &sinks)
         : _logger_name(logger_name), _limit_level(level), _formatter_sp(formatter), _sinks(sinks.begin(), sinks.end())
     {
@@ -162,7 +163,7 @@ namespace log
   public:
     SyncLogger(const std::string &logger_name,
                LogLevel::Value level,
-               std::shared_ptr<Formatter> formatter,
+               std::shared_ptr<Formatter>& formatter,
                std::vector<std::shared_ptr<LogSink>> &sinks)
         : Logger(logger_name, level, formatter, sinks)
     {
@@ -181,43 +182,34 @@ namespace log
   };
 
 
-//同步写日志过程(直接落地)可能写的比较慢,写入量多等,为了避免因写日志过程阻塞带来的影响,实现异步落地日志器
-//异步:(间接落地)不让业务线程进行日志的实际落地操作,而是将日志消息放到缓冲区(一块指定的内存)中,让一个专门的异步线程去将该缓冲区中的数据进行处理
- 
-//异步优点:避免了同步日志可能因IO问题阻塞的情况
-//异步缺点:理想情况下,没有同步日志快 
 
+// logger_name level -> fmt -> sinks  //消息 - 格式化 - 落地
+  class AsyncLogger : public Logger {
+    public:
+      AsyncLogger(const std::string& logger_name,
+                  LogLevel::Value level,
+                  std::shared_ptr<Formatter>& formatter,
+                  std::vector<std::shared_ptr<LogSink>>& sinks,
+                  AsyncType asynctype = AsyncType::ASYNC_SAFE)
+          : Logger(logger_name, level, formatter, sinks),_looper(std::bind(&AsyncLogger::reallog,this,std::placeholders::_1),asynctype)
+      {}
+    void log(const char *data, size_t len) override{
+      _looper.push(data,len);
+    }
+    
+    void reallog(Buffer& buf){
+      // std::unique_lock<std::mutex> lock(_mutex); //不需要锁,异步线程只有一个,是串行的
+      if(_sinks.empty()){ return ; }
+      for (auto &sink : _sinks) {
+        sink->log(buf.begin(),buf.readAbleSize());
+      }
+    }
+    
+    private:
+      AsyncLooper _looper;
 
-//日志一般只会用一个线程 -- 主要资源用于业务
-//但也要保证线程安全 -- 
-
-  //异步缓冲区实现路程:
-  /*
-  1. 队列 先进先出特性 --> STL队列:链式队列,输入输出过程频繁申请与释放内存,性能浪费严重. 生产消费竞争锁,效率低
-  2. 环形队列 定长,循环使用 --> 生产消费模型:竞态行为不那么严重: 主要瓶颈:高并发场景中信号量为主要性能开销,信号量涉及内核态,频繁切换开销
-  3. 双缓冲 交换---> 避免生产与消费频繁的锁冲突(串行化) 优点:只在生产满时或消费完时发生生产消费一次互斥; 输出: 一次性IO输出,减少IO次数,提高效率
-  */
-
- /*
-  缓冲区设计: 一个缓冲区负责输入,另一个缓冲区负责输出; 当其中一个满足条件时,进行角色交换;另一个为空时,不交换
-  存储数据类型: 只存储格式化好的字符串 -- 避免Msg对象频繁创建带来的性能开销
-  数据结构: std::vector -- 
-  读指针rseek: 指向当前读取的位置,读到写指针位置时,表明读完,交换
-  写指针wseek: 指向当前写入的位置,写到读指针位置时,表示写满,交换
-
-  提供的缓冲区管理操作:
-  - 读写操作
-    1.向缓冲区中写入数据 push()
-    2.从缓冲区中读入数据 (虚:读数据会再次发生拷贝,原位置不需要保留 --> 不读,直接移动 --> 几乎与同步日志效率一样)
-    -.读写指针偏移  1.读指针偏移moveReader 2.写指针偏移moveWrite 3.获取可读数据起始地址begin 4.获取可读数据长度readAbleSize()
-  - 初始化 reset()
-  - 交换(地址交换) 1.empty()
- */
-
-
-  class AsyncLogger : public Logger
-  {
   };
+
 
   enum class LoggerType
   {
@@ -232,22 +224,22 @@ namespace log
   {
   public:
     LoggerBuilder()
-        : _limit_level(LogLevel::Value::INFO), _logger_type(LoggerType::LOGGER_SYNC)
-    {
-    }
+      //default config
+         : _asynctype(AsyncType::ASYNC_SAFE),_limit_level(LogLevel::Value::INFO), _logger_type(LoggerType::LOGGER_SYNC)
+    { }
 
-    void buildLoggerType(LoggerType logger_type = LoggerType::LOGGER_SYNC);
+    //必需
     void buildLoggerName(const std::string &name) { _logger_name = name; }
-    void buildLoggerLevel(LogLevel::Value level = LogLevel::Value::INFO) { _limit_level = level; }
-    void buildFormatter(const std::string &pattern = "")
+    
+    void buildEnableUnsafeAsync(){_asynctype = AsyncType::ASYNC_UNSAFE;}
+    void buildLoggerType(LoggerType logger_type ){_logger_type = logger_type;}
+    void buildLoggerLevel(LogLevel::Value level ) { _limit_level = level; }
+   
+    void buildFormatter(const std::string &pattern )
     {
-      if (pattern.empty())
-      {
-        _formatter_sp = std::make_shared<Formatter>();
-        return;
-      }
       _formatter_sp = std::make_shared<Formatter>(pattern);
     }
+    
     template <class SinkType, class... Args>
     void buildSink(Args &&...args)
     {
@@ -258,9 +250,10 @@ namespace log
     virtual std::shared_ptr<Logger> build() = 0;
 
   protected:
+    AsyncType _asynctype;
+    std::atomic<LogLevel::Value> _limit_level;
     LoggerType _logger_type;
     std::string _logger_name;
-    std::atomic<LogLevel::Value> _limit_level;
     std::shared_ptr<Formatter> _formatter_sp;
     std::vector<std::shared_ptr<LogSink>> _sinks; // 优化:使用set,保证唯一
   };
@@ -271,6 +264,10 @@ namespace log
     std::shared_ptr<Logger> build() override
     {
       assert(!_logger_name.empty());
+      if (_formatter_sp.get() == nullptr) //传入格式为空
+      {
+        _formatter_sp = std::make_shared<Formatter>();
+      }
       if(_logger_name.empty()){
          std::cout<<"logger_name is empty"<<std::endl;
       }
@@ -280,6 +277,7 @@ namespace log
       }
       if (_logger_type == LoggerType::LOGGER_ASYNC)
       {
+        return std::make_shared<AsyncLogger>(_logger_name,_limit_level,_formatter_sp,_sinks,_asynctype);
       }
       return std::make_shared<SyncLogger>(_logger_name, _limit_level, _formatter_sp, _sinks);
     }

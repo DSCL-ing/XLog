@@ -72,7 +72,8 @@ void Test_Logger()
   auto lsp3 = log::SinkFactory::create<log::RollBySizeSink>("logsBySize/roll-", 1024 * 1024);
   std::shared_ptr<log::LogSink> lsp4 = log::SinkFactory::create<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
   std::vector<std::shared_ptr<log::LogSink>> sinks{lsp1, lsp2, lsp3, lsp4};
-  log::SyncLogger sl("root", log::LogLevel::Value::INFO, std::make_shared<log::Formatter>("[%d{%H:%M:%S}][%t][%p][%c][%f:%l] %m%n"), sinks);
+  std::shared_ptr<log::Formatter> fmt_sp(new log::Formatter("[%d{%H:%M:%S}][%t][%p][%c][%f:%l] %m%n"));
+  log::SyncLogger sl("root", log::LogLevel::Value::INFO, fmt_sp, sinks);
 
   time_t start_time = log::util::DateUtil::getCurTime();
   size_t count = 0;
@@ -89,7 +90,7 @@ void Test_Logger()
 void Test_Builder()
 {
   std::unique_ptr<log::LoggerBuilder> builder(new log::LocalLoggerBuilder());
-  builder->buildFormatter();
+  //builder->buildFormatter();
   // builder->buildLoggerLevel();
   builder->buildLoggerName("root");
   // builder->buildSink<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
@@ -164,6 +165,31 @@ void Test_Buffer(){
   //util : md5sum 比较
 }
 
+void Test_Async(){
+  std::unique_ptr<log::LoggerBuilder> builder(new log::LocalLoggerBuilder());
+  builder->buildLoggerName("root");
+  //builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
+  // builder->buildFormatter();
+  // builder->buildLoggerLevel();
+  // builder->buildSink<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
+  // builder->buildSink<log::RollBySizeSink>("logsBySzie/roll-", 1024 * 1024);
+  //builder->buildEnableUnsafeAsync();
+  //builder->buildSink<log::FileSink>("logsByfile/async.log");
+  // builder->buildLoggerType();
+  builder->buildSink<log::StdoutSink>();
+  auto sl = builder->build();
+  // time_t start_time = log::util::DateUtil::getCurTime();
+  size_t count = 0;
+  sl->debug(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
+  sl->info(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
+  sl->warn(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
+  sl->error(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
+  while (count<500000) {
+    sl->fatal(__FILE__, __LINE__, "%s-%d", "打开文件失败", count++);
+  }
+  
+}
+
 int main()
 {
   // Test_LogLevel();
@@ -171,6 +197,7 @@ int main()
   // Test_LogSink();
   // Test_Logger();
   // Test_Builder();
-  Test_Buffer();
+  // Test_Buffer();
+  Test_Async();
   return 0;
 }

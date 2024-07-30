@@ -67,12 +67,12 @@ namespace log{
         void push(const char* data,size_t len){
           //空间不足: 1.阻塞(实际业务,空间有限),返回false  2.扩容(性能测试)
           //阻塞能够交由外部控制(writeAbleSize),因此不需要在buffer中考虑,buffer只管提供基本的接口
+          //外界能够根据writeAbleSize来判断是否进行插入-- 实现控制定容或扩容
+          //代码实现更加高效 -- 解耦合
           
-          // if(len>writeAbleSize()) return; //定容
+          // if(len>writeAbleSize()) return; //定容 --- 
           
-          if(len>writeAbleSize()){
-            ensureEnoughSize(len); //扩容
-          }
+          ensureEnoughSize(len); //扩容
           std::copy(data,data+len,&_buffer[_windex]);
           moveWrite(len);
         }
