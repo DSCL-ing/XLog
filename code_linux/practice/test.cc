@@ -189,6 +189,19 @@ void Test_Async(){
   
 }
 
+void Test_Global(){ 
+  std::shared_ptr<log::Logger> logger = log::LoggerManager::getInstance().getLogger("global_logger");
+  size_t count = 0;
+  logger->debug(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
+  logger->info(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
+  logger->warn(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
+  logger->error(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
+  while (count<50000) {
+    logger->fatal(__FILE__, __LINE__, "%s-%d", "打开文件失败", count++);
+  }
+
+}
+
 int main()
 {
   // Test_LogLevel();
@@ -197,6 +210,20 @@ int main()
   // Test_Logger();
   // Test_Builder();
   // Test_Buffer();
-  Test_Async();
+  //Test_Async();
+  
+  std::unique_ptr<log::LoggerBuilder> builder (new log::GlobalLoggerBuilder());
+  builder->buildLoggerName("global_logger");
+  //builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
+  // builder->buildFormatter();
+  // builder->buildLoggerLevel();
+  //builder->buildSink<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
+  //builder->buildSink<log::RollBySizeSink>("logsBySzie/roll-", 1024 * 1024);
+  //builder->buildEnableUnsafeAsync();
+  //builder->buildSink<log::FileSink>("logsByfile/async.log");
+  builder->buildSink<log::StdoutSink>();
+  builder->build();
+  Test_Global();
+
   return 0;
 }
