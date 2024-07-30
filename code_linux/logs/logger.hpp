@@ -15,6 +15,7 @@
 #include "sink.hpp"
 #include "level.hpp"
 #include "looper.hpp"
+#include<unordered_map>
 
 namespace log
 {
@@ -47,7 +48,10 @@ namespace log
            std::shared_ptr<Formatter>& formatter,
            std::vector<std::shared_ptr<LogSink>> &sinks)
         : _logger_name(logger_name), _limit_level(level), _formatter_sp(formatter), _sinks(sinks.begin(), sinks.end())
-    {
+    {}
+
+    const std::string& name(){
+      return _logger_name;
     }
 
     // 构造对应等级的日志消息对象并格式化成日志消息字符串,然后进行落地输出
@@ -220,68 +224,161 @@ namespace log
   // 建造者模式: 简化构造流程
   // 有两种日志器对象,分别是同步和异步日志器,直接构造logger太繁琐,使用建造者模式,简化构造流程
   // 抽象logger建造者基类,派生出同步模式与异步模式建造者
+
+
   class LoggerBuilder
   {
-  public:
-    LoggerBuilder()
-      //default config
-         : _asynctype(AsyncType::ASYNC_SAFE),_limit_level(LogLevel::Value::INFO), _logger_type(LoggerType::LOGGER_SYNC)
-    { }
+    public:
+      LoggerBuilder()
+        //default config
+        : _asynctype(AsyncType::ASYNC_SAFE),_limit_level(LogLevel::Value::DEBUG), _logger_type(LoggerType::LOGGER_SYNC)
+      { }
 
-    //必需
-    void buildLoggerName(const std::string &name) { _logger_name = name; }
-    
-    void buildEnableUnsafeAsync(){_asynctype = AsyncType::ASYNC_UNSAFE;}
-    void buildLoggerType(LoggerType logger_type ){_logger_type = logger_type;}
-    void buildLoggerLevel(LogLevel::Value level ) { _limit_level = level; }
-   
-    void buildFormatter(const std::string &pattern )
-    {
-      _formatter_sp = std::make_shared<Formatter>(pattern);
-    }
-    
-    template <class SinkType, class... Args>
-    void buildSink(Args &&...args)
-    {
-      std::shared_ptr<LogSink> sink_sp = SinkFactory::create<SinkType>(std::forward<Args>(args)...);
-      _sinks.push_back(sink_sp);
-    }
+      //必需
+      void buildLoggerName(const std::string &name) { _logger_name = name; }
 
-    virtual std::shared_ptr<Logger> build() = 0;
+      void buildEnableUnsafeAsync(){_asynctype = AsyncType::ASYNC_UNSAFE;}
+      void buildLoggerType(LoggerType logger_type ){_logger_type = logger_type;}
+      void buildLoggerLevel(LogLevel::Value level ) { _limit_level = level; }
 
-  protected:
-    AsyncType _asynctype;
-    std::atomic<LogLevel::Value> _limit_level;
-    LoggerType _logger_type;
-    std::string _logger_name;
-    std::shared_ptr<Formatter> _formatter_sp;
-    std::vector<std::shared_ptr<LogSink>> _sinks; // 优化:使用set,保证唯一
+      void buildFormatter(const std::string &pattern )
+      {
+        _formatter_sp = std::make_shared<Formatter>(pattern);
+      }
+
+      template <class SinkType, class... Args>
+        void buildSink(Args &&...args)
+        {
+          std::shared_ptr<LogSink> sink_sp = SinkFactory::create<SinkType>(std::forward<Args>(args)...);
+          _sinks.push_back(sink_sp);
+        }
+
+      virtual std::shared_ptr<Logger> build() = 0;
+
+    protected:
+      AsyncType _asynctype;
+      std::atomic<LogLevel::Value> _limit_level;
+      LoggerType _logger_type;
+      std::string _logger_name;
+      std::shared_ptr<Formatter> _formatter_sp;
+      std::vector<std::shared_ptr<LogSink>> _sinks; // 优化:使用set,保证唯一
   };
 
   class LocalLoggerBuilder : public LoggerBuilder
   {
-  public:
-    std::shared_ptr<Logger> build() override
-    {
-      assert(!_logger_name.empty());
-      if (_formatter_sp.get() == nullptr) //传入格式为空
+    public:
+      std::shared_ptr<Logger> build() override
       {
-        _formatter_sp = std::make_shared<Formatter>();
+        assert(!_logger_name.empty());
+        if (_formatter_sp.get() == nullptr) //传入格式为空
+        {
+          _formatter_sp = std::make_shared<Formatter>();
+        }
+        if(_logger_name.empty()){
+          std::cout<<"logger_name is empty"<<std::endl;
+        }
+        if (_sinks.empty())
+        {
+          buildSink<StdoutSink>(); // 默认为标准输出
+        }
+        if (_logger_type == LoggerType::LOGGER_ASYNC)
+        {
+          return std::make_shared<AsyncLogger>(_logger_name,_limit_level,_formatter_sp,_sinks,_asynctype);
+        }
+        return std::make_shared<SyncLogger>(_logger_name, _limit_level, _formatter_sp, _sinks);
       }
-      if(_logger_name.empty()){
-         std::cout<<"logger_name is empty"<<std::endl;
-      }
-      if (_sinks.empty())
-      {
-        buildSink<StdoutSink>(); // 默认为标准输出
-      }
-      if (_logger_type == LoggerType::LOGGER_ASYNC)
-      {
-        return std::make_shared<AsyncLogger>(_logger_name,_limit_level,_formatter_sp,_sinks,_asynctype);
-      }
-      return std::make_shared<SyncLogger>(_logger_name, _limit_level, _formatter_sp, _sinks);
-    }
   };
+
+
+/*
+  日志器管理器
+  单例--全局唯一
+  用map管理日志
+  map互斥
+  _root_logger //原始日志器
+    
+  添加日志器 map.insert
+  日志器是否已管理exists -- , map.find
+  获取日志器 map[loggername];
+  获取默认日志器 --- 方便用户
+ 
+  //日志器几乎不删除
+ */
+
+  class LoggerManager{
+    public:
+      static LoggerManager& getInstance(){
+        static LoggerManager _instance;//只会初始化一次,线程安全
+        return _instance; 
+      }
+      void addLogger(std::shared_ptr<Logger>&logger){ //自动获取日志器名
+        if(hasLogger(logger->name()))
+        std::lock_guard<std::mutex> lg(_mutex);
+        _loggers.insert(std::make_pair(logger->name(),logger));
+      }
+
+      bool hasLogger(const std::string& name){
+        auto it = _loggers.find(name);
+        return it==_loggers.end()? false:true; 
+      }
+
+      std::shared_ptr<Logger> getLogger(const std::string&name){
+        return hasLogger(name)? _loggers[name] :  nullptr;
+      }
+      
+      std::shared_ptr<Logger> rootLogger(){
+        return _root_logger;
+      }
+
+    private:
+      LoggerManager(){
+        //emmmmm....  
+        std::unique_ptr<LoggerBuilder> builder(new LocalLoggerBuilder()); //先创建局部logger,后全局
+        builder->buildLoggerName("root");
+        _root_logger = builder->build();
+        addLogger(_root_logger);
+      };
+
+    private:
+      std::unordered_map<std::string,std::shared_ptr<Logger>> _loggers;
+      std::mutex _mutex;
+      std::shared_ptr<Logger> _root_logger;
+  }; //class LoggerManager END
+
+
+  //全局日志器建造者,降低用户使用成本,建造日志器直接为全局对象;
+//为了实现全局日志器建造者,代价很大 -- 耦合度很高,交叉引用
+  class GlobalLoggerBuilder : public LoggerBuilder
+  {
+    public:
+      std::shared_ptr<Logger> build() override
+      {
+        assert(!_logger_name.empty());
+        if (_formatter_sp.get() == nullptr) //传入格式为空
+        {
+          _formatter_sp = std::make_shared<Formatter>();
+        }
+        if(_logger_name.empty()){
+          std::cout<<"logger_name is empty"<<std::endl;
+        }
+        if (_sinks.empty())
+        {
+          buildSink<StdoutSink>(); // 默认为标准输出
+        }
+        std::shared_ptr<Logger> logger;
+        if (_logger_type == LoggerType::LOGGER_ASYNC)
+        {
+          logger =  std::make_shared<AsyncLogger>(_logger_name,_limit_level,_formatter_sp,_sinks,_asynctype);
+        }
+        else {
+          logger =  std::make_shared<SyncLogger>(_logger_name, _limit_level, _formatter_sp, _sinks);
+        }
+        log::LoggerManager::getInstance().addLogger(logger);
+        return logger;
+      }
+  }; // class GlobalLoggerBuilder END
+
+
 
 } // namespace_log_END
 
