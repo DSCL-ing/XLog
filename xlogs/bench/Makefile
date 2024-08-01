@@ -2,16 +2,16 @@
 
 
 #SRC = $(wildcard *.cc)
-SRC = testUtil.cc # $(wildcard *.cc)
+SRC = benchUtil.cc # $(wildcard *.cc)
 
 CXX = g++
 FLAG = -std=c++11 -lpthread -I ../include
 
-.PHONY:all
-all: $(SRC) 
-	$(CXX) $(SRC) $(FLAG) -o test #-g
+.PHONY:bench
+bench: $(SRC) 
+	$(CXX) $(SRC) $(FLAG) -o $@ #-g
 
 .PHONY:clean
 clean:
-	rm -rf test
+	rm -rf bench
 	rm -rf logs*
