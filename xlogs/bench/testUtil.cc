@@ -16,6 +16,7 @@ void bench(const std::string&logger_name,size_t thr_count,size_t msg_count,size_
   //整理输出
   
   std::cout<<"测试日志:"<<msg_count<<"条, ";
+  std::cout<<"线程数:" <<thr_count<<", ";
   size_t size = msg_count*msg_len;
   std::cout<<"总大小:"<<size/1024+size%1024<<" KB, ="<<size/(1024*1024)<<"."<<size%(1024*1024)<<"M\n";
 
@@ -24,7 +25,7 @@ void bench(const std::string&logger_name,size_t thr_count,size_t msg_count,size_
     return ;
   }
 
-  std::string str(msg_count-1,'a'); //末尾留一个,自动填充'\0'
+  std::string str(msg_len,'1'); //末尾留一个,自动填充'\0'
 
   std::vector<std::thread> threads;
   std::vector<double> costs;
@@ -33,8 +34,9 @@ void bench(const std::string&logger_name,size_t thr_count,size_t msg_count,size_
   for(int i = 0;i<thr_count;i++){
     threads.emplace_back([&,i](){
         std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-        for(int j = 0;j<msg_count;j++){
+        for(int j = 0;j<msg_count/thr_count;j++){
           logger->debug("%s",str.c_str());
+	  //DEBUG("%s",str.c_str());
         }
         std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> cost = end - start;
@@ -51,9 +53,10 @@ void bench(const std::string&logger_name,size_t thr_count,size_t msg_count,size_
     if(costs[i]>max_cost) max_cost = costs[i];
   }
 
-  std::cout<<"总耗时:"<<max_cost<<"\n";
-  std::cout<<"每秒输出条数:"<<msg_count/max_cost<<"\n";
-  std::cout<<"每秒输出大小:"<<size/max_cost<<"\n";
+  //size_t count_ps = msg_count;
+  std::cout<<"总耗时:"<<max_cost<<"s"<<"\n";
+  std::cout<<"每秒输出条数:"<<(size_t)(msg_count/max_cost)<<"\n";
+  std::cout<<"每秒输出大小:"<<(size_t)(size/max_cost/1024)<<"MB"<<"\n";
 
 }
 
@@ -62,13 +65,24 @@ void sync_bench(size_t thr_count,size_t msg_count,size_t msg_len){
   builder->buildLoggerName("sync_logger");
   builder->buildLoggerType(log::LoggerType::LOGGER_SYNC);
   builder->buildFormatter("%m%n");
-  builder->buildSink<log::FileSink>("logs/bench.log");
+  builder->buildSink<log::FileSink>("logs/sync.log");
   builder->build();
   bench("sync_logger",thr_count,msg_count,msg_len);
 }
 
+void async_bench(size_t thr_count,size_t msg_count,size_t msg_len){
+  std::unique_ptr<log::LoggerBuilder> builder(new log::GlobalLoggerBuilder());
+  builder->buildLoggerName("async_logger");
+  builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
+  builder->buildEnableUnsafeAsync();
+  builder->buildFormatter("%m%n");
+  builder->buildSink<log::FileSink>("logs/async.log");
+  builder->build();
+  bench("async_logger",thr_count,msg_count,msg_len);
+}
+
 int main(){
-  sync_bench(1,1000000,100);
+  async_bench(std::thread::hardware_concurrency(),10000000,100);
 
   return 0;
 }
