@@ -81,9 +81,14 @@ void async_bench(size_t thr_count,size_t msg_count,size_t msg_len){
 }
 
 int main(){
+  std::cout<<"同步测试-----------------------------------"<<std::endl;
+  sync_bench(2,2000000,100);
+  //sync_bench(2,1000000,100);
   //sync_bench(std::thread::hardware_concurrency(),1000000,100);
-  //sync_bench(3,1000000,100);
-  async_bench(1,100000,100);
+  std::cout<<"异步测试-----------------------------------"<<std::endl;
+  async_bench(2,2000000,100);
+  //async_bench(2,1000000,100);
+  //async_bench(std::thread::hardware_concurrency(),1000000,100);
 
   return 0;
 }
