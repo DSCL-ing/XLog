@@ -53,9 +53,11 @@ logic:
  */
 
 namespace log{
+
+  //可优化
   #define DEFAULT_BUFFER_SIZE 1*1024*1024  //1M
-  #define THRESHOLD_BUFFER_SIZE 5*1024*1024 //5M -- 阈值以下,翻倍增长;阈值以上 线性增长
-  #define INCREMENT_BUFFER_SIZE 1*1024*1024 //1M -- 线性增长,增量大小
+  #define THRESHOLD_BUFFER_SIZE 10*1024*1024 //5M -- 阈值以下,翻倍增长;阈值以上 线性增长
+  #define INCREMENT_BUFFER_SIZE 1*1024*1024 //1M -- 线性增长,增量大小 --- 
                                             
                                            
     class Buffer{

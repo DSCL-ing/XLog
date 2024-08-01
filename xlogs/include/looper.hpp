@@ -39,11 +39,6 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
 
         void stop(){
           _stop = true;
-          //if(_stop)
-          //      std::cout<<"_stop == true\n";
-          //else{
-          //  std::cout<<"?\n";
-          //}
           _cond_con.notify_all();
            _thread.join(); 
         }
@@ -84,6 +79,45 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
 */
 
 
+/*
+_stop/_running变量用于控制起始状态
+empty用于维护同步关系
+除非说程序没有起始状态,就可以只使用empty
+
+运行时+生产缓冲区为空时阻塞;    
+运行时+生产缓冲区非空是继续;    
+非运行时+生产缓冲区为空时退出;
+非运行时+生产缓冲区非空时继续;
+
+A:运行时
+B:为空
+C:继续
+A B C
+1 0 0  //阻塞
+1 1 1
+0 0 x  //出口 -- 
+0 1 1
+即!run||empty
+
+条件分析:
+  定义:
+  _stop:s
+  _pro.empty:e
+
+  s&e   -break
+  s&!e  -continue
+  !s&e  -sleep
+  !s&!e -continue
+
+!_buf_pro.empty()||_stop;
+  A  B  C
+  0  0  1
+  0  1  1
+  1  0  0  //运行时+生产缓冲区为空时阻塞;
+  1  1  1
+ 
+ */
+
         //通过_stop控制线程任务的启停
         void threadEntry(){
           while(1){
@@ -91,14 +125,8 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
               std::unique_lock<std::mutex> lock(_mutex);
               //保证停止前输出完所有数据 -- 只要有数据就不停止
 
-              if (_stop == true && _buf_pro.empty()) {
-                if(_stop)
-                  std::cout<<"_stop == true\n";
-                else{
-                  std::cout<<"?\n";
-                }
-                std::cout<<"stop"; break; }
-              //生产缓冲区为空时阻塞
+              if (_stop == true && _buf_pro.empty()) { break; }
+              //运行时+生产缓冲区为空时阻塞;
               _cond_con.wait(lock,[&](){return !_buf_pro.empty()||_stop;}); //捕获this
               //走到这里,不为空,取走数据
               _buf_con.swap(_buf_pro);
@@ -118,6 +146,7 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
         std::mutex _mutex; 
         std::condition_variable _cond_pro; //producer
         std::condition_variable _cond_con; //consumer
+
 
         Functor _callback; //输出任务
         std::thread _thread;    //异步输出任务线程
