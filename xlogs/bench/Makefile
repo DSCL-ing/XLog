@@ -2,7 +2,7 @@
 
 
 #SRC = $(wildcard *.cc)
-SRC = test_xlog.cc  # $(wildcard *.cc)
+SRC = testUtil.cc # $(wildcard *.cc)
 
 CXX = g++
 FLAG = -std=c++11 -lpthread -I ../include

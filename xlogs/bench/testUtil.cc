@@ -5,7 +5,7 @@
 #include<vector>
 #include<chrono>
 
-void benchMark(const std::string&logger_name,size_t thr_count,size_t msg_count,size_t msg_len){
+void bench(const std::string&logger_name,size_t thr_count,size_t msg_count,size_t msg_len){
   //获取日志器
   //组织指定长度的日志消息
   //创建指定数量的线程
@@ -14,6 +14,10 @@ void benchMark(const std::string&logger_name,size_t thr_count,size_t msg_count,s
   //结束计时
   //计算总耗时
   //整理输出
+  
+  std::cout<<"测试日志:"<<msg_count<<"条, ";
+  size_t size = msg_count*msg_len;
+  std::cout<<"总大小:"<<size/1024+size%1024<<" KB, ="<<size/(1024*1024)<<"."<<size%(1024*1024)<<"M\n";
 
   std::shared_ptr<log::Logger> logger = log::getLogger(logger_name); 
   if(logger.get() == nullptr){
@@ -38,12 +42,33 @@ void benchMark(const std::string&logger_name,size_t thr_count,size_t msg_count,s
     });
   }
 
+  for(int i = 0 ; i<thr_count;i++){
+    threads[i].join();
+  }
 
+  double max_cost = costs[0];
+  for(int i = 0; i<thr_count;i++){
+    if(costs[i]>max_cost) max_cost = costs[i];
+  }
+
+  std::cout<<"总耗时:"<<max_cost<<"\n";
+  std::cout<<"每秒输出条数:"<<msg_count/max_cost<<"\n";
+  std::cout<<"每秒输出大小:"<<size/max_cost<<"\n";
 
 }
 
+void sync_bench(size_t thr_count,size_t msg_count,size_t msg_len){
+  std::unique_ptr<log::LoggerBuilder> builder(new log::GlobalLoggerBuilder());
+  builder->buildLoggerName("sync_logger");
+  builder->buildLoggerType(log::LoggerType::LOGGER_SYNC);
+  builder->buildFormatter("%m%n");
+  builder->buildSink<log::FileSink>("logs/bench.log");
+  builder->build();
+  bench("sync_logger",thr_count,msg_count,msg_len);
+}
 
 int main(){
+  sync_bench(1,1000000,100);
 
   return 0;
 }
