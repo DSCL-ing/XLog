@@ -30,7 +30,6 @@ void bench(const std::string&logger_name,size_t thr_count,size_t msg_count,size_
   std::vector<std::thread> threads;
   std::vector<double> costs;
 
-
   for(int i = 0;i<thr_count;i++){
     threads.emplace_back([&,i](){
         std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
@@ -44,8 +43,8 @@ void bench(const std::string&logger_name,size_t thr_count,size_t msg_count,size_
     });
   }
 
-  for(int i = 0 ; i<thr_count;i++){
-    threads[i].join();
+  for(auto& th: threads){
+    th.join();
   }
 
   double max_cost = costs[0];
@@ -82,7 +81,9 @@ void async_bench(size_t thr_count,size_t msg_count,size_t msg_len){
 }
 
 int main(){
-  async_bench(std::thread::hardware_concurrency(),10000000,100);
+  //sync_bench(std::thread::hardware_concurrency(),1000000,100);
+  //sync_bench(3,1000000,100);
+  async_bench(1,100000,100);
 
   return 0;
 }

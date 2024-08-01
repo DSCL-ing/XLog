@@ -195,10 +195,10 @@ namespace log
                   std::shared_ptr<Formatter>& formatter,
                   std::vector<std::shared_ptr<LogSink>>& sinks,
                   AsyncType asynctype = AsyncType::ASYNC_SAFE)
-          : Logger(logger_name, level, formatter, sinks),_looper(std::bind(&AsyncLogger::reallog,this,std::placeholders::_1),asynctype)
+          : Logger(logger_name, level, formatter, sinks),_looper(std::make_shared<AsyncLooper>(std::bind(&AsyncLogger::reallog,this,std::placeholders::_1),asynctype))
       {}
     void log(const char *data, size_t len) override{
-      _looper.push(data,len);
+      _looper->push(data,len);
     }
     
     void reallog(Buffer& buf){
@@ -210,7 +210,7 @@ namespace log
     }
     
     private:
-      AsyncLooper _looper;
+    std::shared_ptr<AsyncLooper> _looper;
 
   };
 

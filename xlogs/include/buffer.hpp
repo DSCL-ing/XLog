@@ -117,7 +117,7 @@ namespace log{
       private:
         //扩容 -- 确保有足够空间
         void ensureEnoughSize(size_t len){ //简单复现 -- linux 网络IO 拥塞控制
-          if (len < writeAbleSize()) return;
+          if (len <= writeAbleSize()) return;
           size_t new_capacity = 0;
           if (_buffer.size() < THRESHOLD_BUFFER_SIZE) {
             new_capacity = _buffer.size() * 2 + len;

@@ -214,14 +214,14 @@ int main()
   
   std::unique_ptr<log::LoggerBuilder> builder (new log::GlobalLoggerBuilder());
   builder->buildLoggerName("global_logger");
-  //builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
+  builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
   // builder->buildFormatter();
   // builder->buildLoggerLevel();
   //builder->buildSink<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
   //builder->buildSink<log::RollBySizeSink>("logsBySzie/roll-", 1024 * 1024);
-  //builder->buildEnableUnsafeAsync();
-  //builder->buildSink<log::FileSink>("logsByfile/async.log");
-  builder->buildSink<log::StdoutSink>();
+  builder->buildEnableUnsafeAsync();
+  builder->buildSink<log::FileSink>("logs/async.log");
+  //builder->buildSink<log::StdoutSink>();
   builder->build();
   Test_Global();
 

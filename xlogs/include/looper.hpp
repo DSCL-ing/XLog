@@ -39,6 +39,11 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
 
         void stop(){
           _stop = true;
+          //if(_stop)
+          //      std::cout<<"_stop == true\n";
+          //else{
+          //  std::cout<<"?\n";
+          //}
           _cond_con.notify_all();
            _thread.join(); 
         }
@@ -46,19 +51,22 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
 //使用future? 代码更优雅
 
         void push(const char* data, size_t len){
+
           //1.无线扩容--非安全(用于压力测试) 2.阻塞--安全
           std::unique_lock<std::mutex> lock(_mutex);
-          
-          //只针对阻塞模式,写不满就休眠,等待唤醒;能写入就唤醒消费者 --- 只有生产者知道有没有数据
-          if(_looper_type == AsyncType::ASYNC_SAFE){
-            _cond_pro.wait(lock,[&](){return len>_buf_pro.writeAbleSize()?false:true;}); //一行代码决定是否安全
+          {
+
+            //只针对阻塞模式,写不满就休眠,等待唤醒;能写入就唤醒消费者 --- 只有生产者知道有没有数据
+            if(_looper_type == AsyncType::ASYNC_SAFE){
+              _cond_pro.wait(lock,[&](){return len>_buf_pro.writeAbleSize()?false:true;}); //一行代码决定是否安全模式
+            }
+            // 性能: 输出很慢+写满阻塞时,性能影响严重; 输出速度>输入时,阻塞少,高性能. 
+
+
+            //串行插入--线程安全
+            _buf_pro.push(data,len);
+            _cond_con.notify_all(); //保证是当前push线程,只唤醒一次;只有一个异步线程,只用于条件变量的锁
           }
-         // 性能: 输出很慢+写满阻塞时,性能影响严重; 输出速度>输入时,阻塞少,高性能. 
-
-
-          //串行插入--线程安全
-          _buf_pro.push(data,len);
-          _cond_con.notify_all(); //保证是当前线程,只唤醒一次(无妨,形式,只有一个线程,条件变量的锁)
         }
 
         //异步任务线程入口
@@ -74,7 +82,7 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
            条件: 进入时消费者buf一定没有数据 ---> 等生产者通知
 
 */
-        
+
 
         //通过_stop控制线程任务的启停
         void threadEntry(){
@@ -82,9 +90,16 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
             {
               std::unique_lock<std::mutex> lock(_mutex);
               //保证停止前输出完所有数据 -- 只要有数据就不停止
-              if (_stop == true && _buf_pro.empty()) { break; }
+
+              if (_stop == true && _buf_pro.empty()) {
+                if(_stop)
+                  std::cout<<"_stop == true\n";
+                else{
+                  std::cout<<"?\n";
+                }
+                std::cout<<"stop"; break; }
               //生产缓冲区为空时阻塞
-              _cond_con.wait(lock,[&](){return _buf_pro.empty()?false:true;}); //捕获this
+              _cond_con.wait(lock,[&](){return !_buf_pro.empty()||_stop;}); //捕获this
               //走到这里,不为空,取走数据
               _buf_con.swap(_buf_pro);
               //通知生产者 --- 锁内,保证是当前线程,只唤醒一次
