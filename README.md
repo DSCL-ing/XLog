@@ -211,4 +211,7 @@ Xlog是一个C++实现的日志库，支持同步和异步两种模式。
 
 ### 设计思路
 
+![log](README.assets/log-17225838838121.png)
+
 ![log](README.assets/log.png)
+
