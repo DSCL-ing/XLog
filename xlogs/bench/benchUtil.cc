@@ -20,7 +20,7 @@ void bench(const std::string&logger_name,size_t thr_count,size_t msg_count,size_
   size_t size = msg_count*msg_len;
   std::cout<<"总大小:"<<size/1024+size%1024<<" KB, ="<<size/(1024*1024)<<"."<<size%(1024*1024)<<"M\n";
 
-  std::shared_ptr<log::Logger> logger = log::getLogger(logger_name); 
+  log::Logger::s_ptr logger = log::getLogger(logger_name); 
   if(logger.get() == nullptr){
     return ;
   }

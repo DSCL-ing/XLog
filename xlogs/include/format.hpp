@@ -119,12 +119,14 @@ namespace log{
   class NLineFormatItem:public FormatItem{
     public:
       void format(std::ostream &out,const LogMsg& msg){
+        (void)msg;
         out<<"\n";
       }
   };
   class TabFormatItem:public FormatItem{
     public:
       void format(std::ostream &out,const LogMsg& msg){
+        (void)msg;
         out<<"\t"; 
       }
   };
@@ -133,6 +135,7 @@ namespace log{
     public:
       OtherFormatItem(const std::string& str):_str(str){ }
       void format(std::ostream &out,const LogMsg&msg){
+        (void)msg;
         out<<_str;
       }
     private:
@@ -148,6 +151,7 @@ namespace log{
      */
     
     public:
+      using s_ptr = std::shared_ptr<log::Formatter>;
       Formatter(const std::string& pattern = "[%d{%H:%M:%S}][%t][%p][%c][%f:%l] %m%n")
         :_pattern(pattern)
         {

@@ -43,10 +43,11 @@ namespace log
   class Logger
   {
   public:
+    using s_ptr = std::shared_ptr<log::Logger>;
     Logger(const std::string &logger_name,
            LogLevel::Value level,
-           std::shared_ptr<Formatter>& formatter,
-           std::vector<std::shared_ptr<LogSink>> &sinks)
+           Formatter::s_ptr& formatter,
+           std::vector<LogSink::s_ptr> &sinks)
         : _logger_name(logger_name), _limit_level(level), _formatter_sp(formatter), _sinks(sinks.begin(), sinks.end())
     {}
 
@@ -153,8 +154,8 @@ namespace log
   protected:
     std::string _logger_name;
     std::atomic<LogLevel::Value> _limit_level; // 枚举成员本质属整型类 -- 多线程输出日志,频繁访问,竞态
-    std::shared_ptr<Formatter> _formatter_sp;
-    std::vector<std::shared_ptr<LogSink>> _sinks;
+    Formatter::s_ptr _formatter_sp;
+    std::vector<LogSink::s_ptr> _sinks;
     std::mutex _mutex; // 防止出现竞态条件
 
   }; // class logger  __END__
@@ -167,8 +168,8 @@ namespace log
   public:
     SyncLogger(const std::string &logger_name,
                LogLevel::Value level,
-               std::shared_ptr<Formatter>& formatter,
-               std::vector<std::shared_ptr<LogSink>> &sinks)
+               Formatter::s_ptr& formatter,
+               std::vector<LogSink::s_ptr> &sinks)
         : Logger(logger_name, level, formatter, sinks)
     {
     }
@@ -192,8 +193,8 @@ namespace log
     public:
       AsyncLogger(const std::string& logger_name,
                   LogLevel::Value level,
-                  std::shared_ptr<Formatter>& formatter,
-                  std::vector<std::shared_ptr<LogSink>>& sinks,
+                  Formatter::s_ptr& formatter,
+                  std::vector<LogSink::s_ptr>& sinks,
                   AsyncType asynctype = AsyncType::ASYNC_SAFE)
           : Logger(logger_name, level, formatter, sinks),_looper(std::make_shared<AsyncLooper>(std::bind(&AsyncLogger::reallog,this,std::placeholders::_1),asynctype))
       {}
@@ -210,7 +211,7 @@ namespace log
     }
     
     private:
-    std::shared_ptr<AsyncLooper> _looper;
+    AsyncLooper::s_ptr _looper;
 
   };
 
@@ -249,25 +250,25 @@ namespace log
       template <class SinkType, class... Args>
         void buildSink(Args &&...args)
         {
-          std::shared_ptr<LogSink> sink_sp = SinkFactory::create<SinkType>(std::forward<Args>(args)...);
+          LogSink::s_ptr sink_sp = SinkFactory::create<SinkType>(std::forward<Args>(args)...);
           _sinks.push_back(sink_sp);
         }
 
-      virtual std::shared_ptr<Logger> build() = 0;
+      virtual Logger::s_ptr build() = 0;
 
     protected:
       AsyncType _asynctype;
       std::atomic<LogLevel::Value> _limit_level;
       LoggerType _logger_type;
       std::string _logger_name;
-      std::shared_ptr<Formatter> _formatter_sp;
-      std::vector<std::shared_ptr<LogSink>> _sinks; // 优化:使用set,保证唯一
+      Formatter::s_ptr _formatter_sp;
+      std::vector<LogSink::s_ptr> _sinks; // 优化:使用set,保证唯一
   };
 
   class LocalLoggerBuilder : public LoggerBuilder
   {
     public:
-      std::shared_ptr<Logger> build() override
+      Logger::s_ptr build() override
       {
         assert(!_logger_name.empty());
         if (_formatter_sp.get() == nullptr) //传入格式为空
@@ -311,7 +312,7 @@ namespace log
         static LoggerManager _instance;//只会初始化一次,线程安全
         return _instance; 
       }
-      void addLogger(std::shared_ptr<Logger>&logger){ //自动获取日志器名
+      void addLogger(Logger::s_ptr& logger){ //自动获取日志器名
         if(hasLogger(logger->name()))
         std::lock_guard<std::mutex> lg(_mutex);
         _loggers.insert(std::make_pair(logger->name(),logger));
@@ -322,11 +323,11 @@ namespace log
         return it==_loggers.end()? false:true; 
       }
 
-      std::shared_ptr<Logger> getLogger(const std::string&name){
+      Logger::s_ptr getLogger(const std::string&name){
         return hasLogger(name)? _loggers[name] :  nullptr;
       }
       
-      std::shared_ptr<Logger> rootLogger(){
+      Logger::s_ptr rootLogger(){
         return _root_logger;
       }
 
@@ -340,9 +341,9 @@ namespace log
       };
 
     private:
-      std::unordered_map<std::string,std::shared_ptr<Logger>> _loggers;
+      std::unordered_map<std::string,Logger::s_ptr> _loggers;
       std::mutex _mutex;
-      std::shared_ptr<Logger> _root_logger;
+      Logger::s_ptr _root_logger;
   }; //class LoggerManager END
 
 
@@ -351,7 +352,7 @@ namespace log
   class GlobalLoggerBuilder : public LoggerBuilder
   {
     public:
-      std::shared_ptr<Logger> build() override
+      Logger::s_ptr build() override
       {
         assert(!_logger_name.empty());
         if (_formatter_sp.get() == nullptr) //传入格式为空
@@ -365,7 +366,7 @@ namespace log
         {
           buildSink<StdoutSink>(); // 默认为标准输出
         }
-        std::shared_ptr<Logger> logger;
+        Logger::s_ptr logger;
         if (_logger_type == LoggerType::LOGGER_ASYNC)
         {
           logger =  std::make_shared<AsyncLogger>(_logger_name,_limit_level,_formatter_sp,_sinks,_asynctype);

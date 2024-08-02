@@ -15,6 +15,7 @@
 namespace log{
   class LogSink{
     public:
+      using s_ptr = std::shared_ptr<log::LogSink>;
       LogSink() {}
       virtual ~LogSink() {}
       virtual void log(const char *data, size_t len) = 0;
@@ -123,7 +124,7 @@ namespace log{
   class SinkFactory{
     public:
       template<class SinkType,class ... Args>
-        static std::shared_ptr<LogSink> create(Args&& ... args){
+        static LogSink::s_ptr create(Args&& ... args){
           return std::make_shared<SinkType>(std::forward<Args>(args)...); //完美转发+可变参数-- 常客:能够接收任意参数
         }
   };

@@ -2,7 +2,7 @@
 
 
 void Test_Global(){ 
-  std::shared_ptr<log::Logger> logger = log::LoggerManager::getInstance().getLogger("global_logger");
+  log::Logger::s_ptr logger = log::LoggerManager::getInstance().getLogger("global_logger");
   size_t count = 0;
   logger->debug(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
   logger->info(__FILE__, __LINE__, "%s-%d", "打开文件失败", count);
@@ -36,7 +36,7 @@ int main(){
   ERROR("%s","hello xlog!");
   FATAL("%s","hello xlog!");
 
-  std::shared_ptr<log::LoggerBuilder> builder(new log::GlobalLoggerBuilder());
+  std::unique_ptr<log::LoggerBuilder> builder(new log::GlobalLoggerBuilder());
   builder->buildLoggerName("g_sync_logger");
   builder->build();
 

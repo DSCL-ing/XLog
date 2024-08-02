@@ -8,11 +8,11 @@ namespace log{
 
   //提供一些常用的简易全局(宏)函数,便于用户快速上手
 
-  std::shared_ptr<Logger> getLogger(const std::string&name){
+  Logger::s_ptr getLogger(const std::string&name){
     return LoggerManager::getInstance().getLogger(name);
   }
 
-  std::shared_ptr<Logger> rootLogger(){
+  Logger::s_ptr rootLogger(){
     return LoggerManager::getInstance().rootLogger();
   }
 

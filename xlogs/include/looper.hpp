@@ -28,6 +28,7 @@ enum class AsyncType{
 using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
     class AsyncLooper{
     public:
+        using s_ptr= std::shared_ptr<log::AsyncLooper>;
         AsyncLooper(const Functor& callback,AsyncType looper_type = AsyncType::ASYNC_SAFE)
         :_looper_type(looper_type),_stop(false),
         _callback(callback),

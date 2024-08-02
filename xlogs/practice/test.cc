@@ -1,12 +1,5 @@
-
-#include "level.hpp"
-#include "util.hpp"
-#include "message.hpp"
-#include "format.hpp"
-#include "sink.hpp"
-#include "my_sink.h"
-#include "logger.hpp"
-#include "buffer.hpp"
+#include"../include/xlog.h"
+#include"../extend/my_sink.h"
 
 void Test_Util()
 {
