@@ -20,41 +20,47 @@ void Test_LogLevel()
   std::cout << log::LogLevel::toString(log::LogLevel::Value::UNKNOW) << "\n";
 }
 
+//日志输出格式化类与日志消息类测试
 void Test_Formatter()
 {
+  //消息类测试:组织消息类
   log::LogMsg msg(log::LogLevel::Value::DEBUG, "test.cc", 12, "root", "创建文件失败");
+  //输出格式化类测试:
+  //1. 指定输出规则
   log::Formatter fmt("abc[%d{%H:%M:%S}]%%[%t][%p][%c][%f:%l]%T %m%n");
+  //2. 验证:将格式化字符流喂给标准输出流
   std::cout << fmt.format(msg);
 }
 
 void Test_LogSink()
 {
-  // std::shared_ptr<log::LogSink> lsp = log::SinkFactory::create<log::StdoutSink>();
+   std::shared_ptr<log::LogSink> lsp = log::SinkFactory::create<log::StdoutSink>();
   // auto lsp = log::SinkFactory::create<log::FileSink>("logs/log");
   // auto lsp = log::SinkFactory::create<log::RollBySizeSink>("logs/roll-",1024*1024);
-  std::shared_ptr<log::LogSink> lsp = log::SinkFactory::create<RollbyTimeSink>("logs/roll-", TimeGap::SECOND);
+  //std::shared_ptr<log::LogSink> lsp = log::SinkFactory::create<RollbyTimeSink>("logs/roll-", TimeGap::SECOND);
 
+  //使用默认规则
   log::Formatter fmt;
-  int count = 0;
 
-  // size_Test
-  // for(int i  = 0;i<1024*1024*100;){
-  // log::LogMsg msg(log::LogLevel::Value::DEBUG,"test.cc",12,"root","创建文件失败");
-  // std::string str = fmt.format(msg);
-  //   std::string tmp = str+std::to_string(count++);
-  //   lsp->log(tmp.c_str(),tmp.size());
-  //   i+=str.size();
-  // }
-
-  // time_Test
-  time_t start_time = log::util::DateUtil::getCurTime();
-  while (log::util::DateUtil::getCurTime() < start_time + 5)
-  {
-    log::LogMsg msg(log::LogLevel::Value::DEBUG, "test.cc", 12, "root", "创建文件失败");
+  //size_Test
+  int count = 50000;
+  for(int i  = 0;i<=count;i++){
+    log::LogMsg msg(log::LogLevel::Value::DEBUG,"test.cc",12,"root","创建文件失败");
     std::string str = fmt.format(msg);
-    std::string tmp = str + std::to_string(count++);
-    lsp->log(tmp.c_str(), tmp.size());
+    std::string tmp = std::to_string(i)+str;
+    lsp->log(tmp.c_str(),tmp.size());
   }
+
+  // time_Test:输出5秒的日志
+  //time_t start_time = log::util::DateUtil::getCurTime();
+  //while (log::util::DateUtil::getCurTime() < start_time + 5)
+  //{
+  //  log::LogMsg msg(log::LogLevel::Value::DEBUG, "test.cc", 12, "root", "创建文件失败");
+  //  std::string str = fmt.format(msg);
+  //  std::string tmp = str + std::to_string(count++);
+  //  //落地
+  //  lsp->log(tmp.c_str(), tmp.size());
+  //}
 }
 
 void Test_Logger()
@@ -106,12 +112,12 @@ void Test_Builder()
 void Test_Buffer(){
   //测试思路:
   /*
-  提前准备好本地文件
-    将本地文件读入内存 
-    将内存中数据写入到buffer
-    将buffer中数据输出到文件  
-  对比文件是否相同 
-  */
+     提前准备好本地文件
+     将本地文件读入内存 
+     将内存中数据写入到buffer
+     将buffer中数据输出到文件  
+     对比文件是否相同 
+     */
 
   std::ifstream ifs("logsByfile/file.log",std::ios::binary);
   if(ifs.is_open() == false){
@@ -121,7 +127,7 @@ void Test_Buffer(){
   ifs.seekg(0,std::ios::end); //文件指针跳转到相对于文件末尾+0的位置
   size_t size = ifs.tellg() ; //获取文件指针当前的位置
   ifs.seekg(std::ios::beg); //文件指针跳转到绝对位置beg,即文件起始
-  
+
   //读到内存
   std::string body;
   body.resize(size);
@@ -132,13 +138,13 @@ void Test_Buffer(){
   }
   ifs.close();
 
-  
+
   //写到缓冲区
   log::Buffer buffer;
   for(size_t i = 0; i<body.size();i++){
     buffer.push(&body[i],1);
   }
-  
+
   //缓冲区写到文件 -- 尽可能测试更多的接口
   std::ofstream ofs("./logsByfile/out.log",std::ios::binary);
   if(ofs.is_open() == false){
@@ -153,7 +159,7 @@ void Test_Buffer(){
   //   buffer.moveReader(1);
   // }
   ofs.write(buffer.begin(),buffersize);
-  
+
 
   //util : md5sum 比较
 }
@@ -179,7 +185,7 @@ void Test_Async(){
   while (count<500000) {
     sl->fatal(__FILE__, __LINE__, "%s-%d", "打开文件失败", count++);
   }
-  
+
 }
 
 void Test_Global(){ 
@@ -197,26 +203,28 @@ void Test_Global(){
 
 int main()
 {
-  // Test_LogLevel();
-  // Test_Formatter();
-  // Test_LogSink();
+  //Test_Util();
+  //Test_LogLevel();
+  //Test_Formatter();
+   Test_LogSink();
   // Test_Logger();
   // Test_Builder();
   // Test_Buffer();
   //Test_Async();
-  
-  std::unique_ptr<log::LoggerBuilder> builder (new log::GlobalLoggerBuilder());
-  builder->buildLoggerName("global_logger");
-  builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
-  // builder->buildFormatter();
-  // builder->buildLoggerLevel();
-  //builder->buildSink<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
-  //builder->buildSink<log::RollBySizeSink>("logsBySzie/roll-", 1024 * 1024);
-  builder->buildEnableUnsafeAsync();
-  builder->buildSink<log::FileSink>("logs/async.log");
-  //builder->buildSink<log::StdoutSink>();
-  builder->build();
-  Test_Global();
+
+  //
+  //std::unique_ptr<log::LoggerBuilder> builder (new log::GlobalLoggerBuilder());
+  //builder->buildLoggerName("global_logger");
+  //builder->buildLoggerType(log::LoggerType::LOGGER_ASYNC);
+  //// builder->buildFormatter();
+  //// builder->buildLoggerLevel();
+  ////builder->buildSink<RollbyTimeSink>("logsByTime/roll-", TimeGap::SECOND);
+  ////builder->buildSink<log::RollBySizeSink>("logsBySzie/roll-", 1024 * 1024);
+  //builder->buildEnableUnsafeAsync();
+  //builder->buildSink<log::FileSink>("logs/async.log");
+  ////builder->buildSink<log::StdoutSink>();
+  //builder->build();
+  //Test_Global();
 
   return 0;
 }

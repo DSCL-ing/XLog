@@ -3,8 +3,8 @@
 
 #include<iostream>
 #include<string>
-#include"util.hpp"
-#include"sink.hpp"
+#include"../include/util.hpp"
+#include"../include/sink.hpp"
 #include<ctime>
 
 

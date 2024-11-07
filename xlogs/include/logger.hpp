@@ -73,6 +73,7 @@ namespace log
       va_end(arg);
       serialize(LogLevel::Value::DEBUG, file, line, buf);
     }
+    
     void info(const std::string &file, size_t line, const char *fmt, ...)
     {
       // 判断等级
@@ -89,6 +90,7 @@ namespace log
       va_end(arg);
       serialize(LogLevel::Value::INFO, file, line, buf);
     }
+    
     void warn(const std::string &file, size_t line, const char *fmt, ...)
     {
       // 判断等级
@@ -104,6 +106,7 @@ namespace log
       va_end(arg);
       serialize(LogLevel::Value::WARN, file, line, buf);
     }
+    
     void error(const std::string &file, size_t line, const char *fmt, ...)
     {
       // 判断等级
@@ -198,10 +201,13 @@ namespace log
                   AsyncType asynctype = AsyncType::ASYNC_SAFE)
           : Logger(logger_name, level, formatter, sinks),_looper(std::make_shared<AsyncLooper>(std::bind(&AsyncLogger::reallog,this,std::placeholders::_1),asynctype))
       {}
+
+      //写到缓冲区中
     void log(const char *data, size_t len) override{
       _looper->push(data,len);
     }
     
+    //实际日志输出
     void reallog(Buffer& buf){
       // std::unique_lock<std::mutex> lock(_mutex); //不需要锁,异步线程只有一个,是串行的
       if(_sinks.empty()){ return ; }

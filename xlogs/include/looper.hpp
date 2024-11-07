@@ -34,6 +34,7 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
         _callback(callback),
         _thread(&AsyncLooper::threadEntry,this)
         {}
+        
         ~AsyncLooper(){
           stop();
         }
@@ -52,7 +53,7 @@ using Functor = std::function<void(Buffer&)>; //处理缓冲区的任务
           std::unique_lock<std::mutex> lock(_mutex);
           {
 
-            //只针对阻塞模式,写不满就休眠,等待唤醒;能写入就唤醒消费者 --- 只有生产者知道有没有数据
+            //只针对阻塞模式,写满就休眠,等待唤醒;能写入就唤醒消费者 --- 只有生产者知道有没有数据
             if(_looper_type == AsyncType::ASYNC_SAFE){
               _cond_pro.wait(lock,[&](){return len>_buf_pro.writeAbleSize()?false:true;}); //一行代码决定是否安全模式
             }
@@ -127,10 +128,14 @@ A B C
               //保证停止前输出完所有数据 -- 只要有数据就不停止
 
               if (_stop == true && _buf_pro.empty()) { break; }
+              
               //运行时+生产缓冲区为空时阻塞;
+              //_stop状态时,需要唤醒所有线程执行到被join,不然程序会休眠阻塞
               _cond_con.wait(lock,[&](){return !_buf_pro.empty()||_stop;}); //捕获this
+
               //走到这里,不为空,取走数据
               _buf_con.swap(_buf_pro);
+
               //通知生产者 --- 锁内,保证是当前线程,只唤醒一次
               _cond_pro.notify_all();
             }

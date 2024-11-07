@@ -9,7 +9,7 @@ FLAG = -std=c++11 -lpthread -I ../include -I ../extend/
 
 .PHONY:all
 all: $(SRC) 
-	$(CXX) $(SRC) $(FLAG) -o test -g
+	$(CXX) $(SRC) $(FLAG)  -g
 
 .PHONY:clean
 clean:

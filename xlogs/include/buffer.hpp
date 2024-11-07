@@ -54,10 +54,11 @@ logic:
 
 namespace log{
 
-  //可优化
+
+  /* threshold: 阈值 */
   #define DEFAULT_BUFFER_SIZE 1*1024*1024  //1M
-  #define THRESHOLD_BUFFER_SIZE 10*1024*1024 //5M -- 阈值以下,翻倍增长;阈值以上 线性增长
-  #define INCREMENT_BUFFER_SIZE 1*1024*1024 //1M -- 线性增长,增量大小 --- 
+  #define THRESHOLD_BUFFER_SIZE 10*1024*1024 //5M -- 阈值:阈值以下,翻倍增长;阈值以上 线性增长
+  #define INCREMENT_BUFFER_SIZE 1*1024*1024 //1M -- 增量大小:线性增长增量, --- 
                                             
                                            
     class Buffer{
@@ -134,8 +135,8 @@ namespace log{
 
       private:
        std::vector<char> _buffer; //字节流vector -- 
-       size_t _rindex;
-       size_t _windex; 
+       size_t _rindex;            //读指针
+       size_t _windex;            //写指针
     };
 
 }//namespace_log__END
