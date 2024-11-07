@@ -72,6 +72,7 @@ namespace log
       vasprintf(&buf, fmt, arg); // 解析不定参,转换成字符串 --GNU,自动计算并malloc
       va_end(arg);
       serialize(LogLevel::Value::DEBUG, file, line, buf);
+      free(buf);
     }
     
     void info(const std::string &file, size_t line, const char *fmt, ...)
@@ -86,9 +87,14 @@ namespace log
       va_list arg; // al,arg,ap,arg_ptr,char*
       va_start(arg, fmt);
       char *buf;
-      vasprintf(&buf, fmt, arg); // 解析不定参,转换成字符串 --GNU,自动计算并malloc
+      int len = vasprintf(&buf, fmt, arg); // 解析不定参,转换成字符串 --GNU,自动计算并malloc
+      if(len<0){
+        std::cout<<"解析的字符串:"<<buf<<std::endl;
+        assert(false);
+      }
       va_end(arg);
       serialize(LogLevel::Value::INFO, file, line, buf);
+      free(buf);
     }
     
     void warn(const std::string &file, size_t line, const char *fmt, ...)
@@ -105,6 +111,7 @@ namespace log
       vasprintf(&buf, fmt, arg); // 解析不定参,转换成字符串 --GNU,自动计算并malloc
       va_end(arg);
       serialize(LogLevel::Value::WARN, file, line, buf);
+      free(buf);
     }
     
     void error(const std::string &file, size_t line, const char *fmt, ...)
@@ -122,6 +129,7 @@ namespace log
       vasprintf(&buf, fmt, arg); // 解析不定参,转换成字符串 --GNU,自动计算并malloc
       va_end(arg);
       serialize(LogLevel::Value::ERROR, file, line, buf);
+      free(buf);
     }
     void fatal(const std::string &file, size_t line, const char *fmt, ...)
     {
@@ -138,6 +146,7 @@ namespace log
       vasprintf(&buf, fmt, arg); // 解析不定参,转换成字符串 --GNU,自动计算并malloc
       va_end(arg);
       serialize(LogLevel::Value::FATAL, file, line, buf);
+      free(buf);
     }
 
   protected:

@@ -1,5 +1,5 @@
-//#ifndef SINK_HPP
-//#define SINK_HPP
+#ifndef SINK_HPP
+#define SINK_HPP
 #pragma once
 
 #include"util.hpp"
@@ -133,4 +133,4 @@ namespace log{
 }//namespace_log_END
 
 
-//#endif
+#endif

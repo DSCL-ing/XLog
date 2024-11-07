@@ -85,7 +85,8 @@ namespace log{
 
         //返回可读大小
         size_t readAbleSize(){ return _windex - _rindex; }
-          // IF: _widx == _ridx ==0 ; ---> push 1; _widx+=1;  THEN: _widx-_ridx==1-0=1 == readAbleSize;
+          // IF: _widx == _ridx ==0 ; ---> push 1; _widx+=1;  
+          // THEN: _widx-_ridx==1-0=1 == readAbleSize;
        
         //移动读指针
         void moveReader(size_t len){

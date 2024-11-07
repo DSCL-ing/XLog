@@ -26,7 +26,7 @@ namespace log{
   #define warn(fmt, ... ) warn( __FILE__,__LINE__,fmt, ##__VA_ARGS__)
   #define error(fmt, ...) error(__FILE__,__LINE__,fmt, ##__VA_ARGS__)
   #define fatal(fmt, ...) fatal(__FILE__,__LINE__,fmt, ##__VA_ARGS__)
-
+  
 
   //提供使用默认日志器进行标准输出打印的全局宏函数
   #define DEBUG(fmt, ...) log::rootLogger()->debug(fmt, ##__VA_ARGS__)
