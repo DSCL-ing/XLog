@@ -65,7 +65,7 @@ void sync_bench(size_t thr_count,size_t msg_count,size_t msg_len){
   std::unique_ptr<log::LoggerBuilder> builder(new log::GlobalLoggerBuilder());
   builder->buildLoggerName("sync_logger");
   builder->buildLoggerType(log::LoggerType::LOGGER_SYNC);
-  builder->buildFormatter("%m%n");
+  //builder->buildFormatter("%m%n");
   builder->buildSink<log::FileSink>("logs/sync.log");
   builder->build();
   bench("sync_logger",thr_count,msg_count,msg_len);

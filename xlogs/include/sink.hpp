@@ -41,13 +41,11 @@ namespace log{
         assert(_ofs.is_open());
       }
       void log(const char *data,size_t len)override{
-        std::cout<<"data"<<std::endl;
         _ofs.write(data,len);
         if(!_ofs.good()){
           std::cout<<"FileSinK:日志文件输出失败!"<<"\n";
           abort();
         }
-        _ofs.close();
       }
 
       private:
@@ -88,7 +86,6 @@ namespace log{
         }
         _ofs.write(data,len);
         _cur_fsize+=len;
-        _ofs.close();
       }
 
     private:
