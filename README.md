@@ -215,3 +215,4 @@ Xlog是一个C++实现的日志库，支持同步和异步两种模式。
 
 ![log](README.assets/log.png)
 
+![Formatter格式化器原理图](README.assets/Formatter%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%99%A8%E5%8E%9F%E7%90%86%E5%9B%BE.png)
